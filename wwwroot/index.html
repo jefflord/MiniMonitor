@@ -5,18 +5,56 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="assets/main.css" />
+
+    <style>
+        /* Add some basic styling to the divs */
+        .container {
+            display: flex;
+        }
+
+        .left-div, .right-div {
+            flex: 1;
+            padding: 20px;
+            border: 1px solid #ddd;
+            margin: 10px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between; /* Adjust as needed for your layout */
+        }
+    </style>
+
 </head>
+
 
 <body>
 
     <video autoplay loop muted>
         <!-- Replace 'your-video.mp4' with the path to your video file -->
-        <source src="C:\Program Files (x86)\Steam\steamapps\common\Quarters\fnaf9\Content\Movies\24FPS\Hour_5_Menu_24.mp4" type="video/mp4">
+        <source src="C:\Users\jeff\Downloads\High tech digital world background 4k.mp4" type="video/mp4">
     </video>
 
+    <div class="container" style="xdisplay:none">
+        <button class="primary center" onclick="MyClass.StartYTM()">Start YTM</button>
+        <button class="primary center" onclick="MyClass.PlayPause()">PlayPause</button>
+        <button class="primary center" onclick="MyClass.Close()">Close</button>
+    </div>
 
-    <button class="primary center" onclick="callDotNet()">Call .NET</button>
-    <button class="primary center" onclick="MyClass.doX()">x</button>
+    <div class="container" style="display:none">
+        <div class="left-div">
+            <button class="primary center" onclick="MyClass.StartYTM()">Start YTM</button>
+            <button class="primary center" onclick="MyClass.PlayPause()">PlayPause</button>
+            <button class="primary center" onclick="MyClass.Close()">Close</button>
+        </div>
+
+        <div class="right-div button-container">
+            <button class="primary center" onclick="MyClass.SendMessage('MoveLeft')">MoveLeft</button>
+            <button class="primary center" onclick="MyClass.SendMessage('MoveRight')">MoveRight</button>
+            <button class="primary center" onclick="MyClass.SendMessage('MoveUp')">MoveUp</button>
+            <button class="primary center" onclick="MyClass.SendMessage('MoveDown')">MoveDown</button>
+        </div>
+    </div>
 
     <script src="app://dynamic.js"></script>
     <script src="assets/main.js"></script>
