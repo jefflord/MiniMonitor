@@ -1,0 +1,35 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="assets/main.css" />
+</head>
+
+<body>
+
+    <video autoplay loop muted>
+        <!-- Replace 'your-video.mp4' with the path to your video file -->
+        <source src="C:\Program Files (x86)\Steam\steamapps\common\Quarters\fnaf9\Content\Movies\24FPS\Hour_5_Menu_24.mp4" type="video/mp4">
+    </video>
+
+
+    <button class="primary center" onclick="callDotNet()">Call .NET</button>
+    <button class="primary center" onclick="MyClass.doX()">x</button>
+
+    <script src="app://dynamic.js"></script>
+    <script src="assets/main.js"></script>
+
+
+    <script>
+        function callDotNet() {
+            window.external.sendMessage('Hi .NET! 🤖');
+        }
+
+        window.external.receiveMessage(message => alert(message));
+
+
+    </script>
+</body>
+</html>
