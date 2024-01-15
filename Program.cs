@@ -127,6 +127,7 @@ namespace HelloPhotinoApp
                 .SetSize(new Size(1940, 490))
                 // Center window in the middle of the screen
                 .Center()
+                .SetIconFile(Path.GetFullPath("wwwroot\\assets\\dino.ico"))
                 .SetChromeless(true)
                 // Users can resize windows by default.
                 // Let's make this one fixed instead.
@@ -266,7 +267,11 @@ namespace HelloPhotinoApp
                 ShowYTM();
                 return;
             }
-
+            if (message == "FindYTM")
+            {
+                FindYTM();
+                return;
+            }
 
 
             //window.Width = window.Width + 1;
@@ -423,13 +428,32 @@ namespace HelloPhotinoApp
             SetWindowPos(mainWindowHandle, HWND_TOP, newX, newY, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
         }
 
+
         private static void ShowYTM()
         {
             SetForegroundWindow(windowHandle);
             ShowWindow(windowHandle, SW_SHOW);
         }
 
+        private static void FindYTM()
+        {
+            new Thread((x) =>
+            {
+                try
+                {
+                    if (windowHandle == IntPtr.Zero)
+                    {
+                        var result = FindWindowByTitle("YouTube");
+                        windowHandle = result.mainWindowHandle;
+                        windowProcess = result.process;
+                    }
+                }
+                catch (Exception e)
+                {
+                }
+            }).Start();
 
+        }
 
         private static void YT_SendKey(VirtualKeyCode key)
         {

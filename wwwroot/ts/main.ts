@@ -18,6 +18,7 @@ class MyClass {
 
         if (me.ytm == null) {
             me.ytm = window.open("https://music.youtube.com/");
+            me.external.sendMessage('FindYTM');
         } else {
             me.external.sendMessage('ShowYTM');
         }
