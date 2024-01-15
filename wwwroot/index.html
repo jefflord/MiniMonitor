@@ -23,6 +23,18 @@
             display: flex;
             justify-content: space-between; /* Adjust as needed for your layout */
         }
+
+        #clock {
+            font-size: 2em;
+            text-align: center;
+            margin-top: 50px;
+            color: white; /* Set font color to white */
+        }
+
+        #period {
+            font-size: 0.8em; /* Set smaller font size for AM/PM */
+            color: white; /* Set font color to white */
+        }
     </style>
 
 </head>
@@ -32,14 +44,22 @@
 
     <video autoplay loop muted>
         <!-- Replace 'your-video.mp4' with the path to your video file -->
-        <source src="C:\Users\jeff\Downloads\High tech digital world background 4k.mp4" type="video/mp4">
+        <source src="assets/High tech digital world background 4k.mp4" type="video/mp4">
     </video>
 
-    <div class="container" style="xdisplay:none">
-        <button class="primary center" onclick="MyClass.StartYTM()">Start YTM</button>
+    <div class="container" style="_display:none">
+        <button class="primary center" onclick="MyClass.StartYTM()">Show YTM</button>
+        <button class="primary center" onclick="MyClass.SendMessage('LastSong')">|&lt;</button>
         <button class="primary center" onclick="MyClass.PlayPause()">PlayPause</button>
+        <button class="primary center" onclick="MyClass.SendMessage('NextSong')">&gt;|</button>
         <button class="primary center" onclick="MyClass.Close()">Close</button>
     </div>
+
+    <div style="text-align: center;">
+        <span id="clock"></span><span id="period"></span>
+    </div>
+    
+
 
     <div class="container" style="display:none">
         <div class="left-div">
@@ -65,9 +85,36 @@
             window.external.sendMessage('Hi .NET! 🤖');
         }
 
-        window.external.receiveMessage(message => alert(message));
+        if (window.external && window.external.receiveMessage) {
+            window.external.receiveMessage(message => alert(message));
+        }
 
 
+
+        function updateClock() {
+            var now = new Date();
+            var hours = now.getHours();
+            var minutes = now.getMinutes();
+
+            // Convert to 12-hour format
+            var period = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+
+            // Add leading zero to minutes if needed
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+
+            var timeString = hours + ':' + minutes;
+            var periodString = period;
+
+            document.getElementById('clock').innerText = timeString;
+            document.getElementById('period').innerText = periodString;
+        }
+
+        // Update the clock every second
+        setInterval(updateClock, 1000);
+
+        // Initial update
+        updateClock();
     </script>
 </body>
 </html>

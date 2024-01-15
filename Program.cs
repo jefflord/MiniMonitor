@@ -227,7 +227,17 @@ namespace HelloPhotinoApp
 
             if (message == "PlayPause")
             {
-                PlayPause();
+                YT_SendKey(VirtualKeyCode.SPACE);
+                return;
+            }
+            if (message == "NextSong")
+            {
+                YT_SendKey(VirtualKeyCode.VK_J);
+                return;
+            }
+            if (message == "LastSong")
+            {
+                YT_SendKey(VirtualKeyCode.VK_K);
                 return;
             }
 
@@ -251,7 +261,6 @@ namespace HelloPhotinoApp
                 MoveDown();
                 return;
             }
-
             if (message == "ShowYTM")
             {
                 ShowYTM();
@@ -420,7 +429,9 @@ namespace HelloPhotinoApp
             ShowWindow(windowHandle, SW_SHOW);
         }
 
-        private static void PlayPause()
+
+
+        private static void YT_SendKey(VirtualKeyCode key)
         {
             new Thread((x) =>
             {
@@ -455,7 +466,7 @@ namespace HelloPhotinoApp
 
                         // Send keys to the active window
                         //inputSimulator.Keyboard.TextEntry("Hello, World!");
-                        inputSimulator.Keyboard.KeyPress(VirtualKeyCode.SPACE);
+                        inputSimulator.Keyboard.KeyPress(key);
 
                     }
                 }
