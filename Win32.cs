@@ -1,8 +1,9 @@
-﻿using System.Drawing;
+﻿using System.Diagnostics;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace HelloPhotinoApp
+namespace Helpers
 {
     internal static class Win32
     {
@@ -98,5 +99,53 @@ namespace HelloPhotinoApp
         // Delegate for the hook callback
         internal delegate void WinEventDelegate(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime);
 
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+
+        internal static (IntPtr mainWindowHandle, Process process) FindWindowByTitle(string title)
+        {
+            IntPtr hWnd = IntPtr.Zero;
+            Process process = null;
+
+            for (var i = 0; i < 10; i++)
+            {
+                hWnd = FindWindow(null, title);
+                if (hWnd != IntPtr.Zero)
+                {
+                    uint processId;
+                    GetWindowThreadProcessId(hWnd, out processId);
+                    process = Process.GetProcessById((int)processId);
+                }
+                else
+                {
+                    foreach (Process pList in Process.GetProcesses())
+                    {
+                        IntPtr h = pList.MainWindowHandle;
+                        process = pList;
+                        StringBuilder windowText = new StringBuilder(256);
+                        Win32.GetWindowText(h, windowText, 256);
+
+                        if (!string.IsNullOrEmpty(windowText.ToString()))
+                        {
+                            Debug.WriteLine($"checking {windowText.ToString()}");
+                            if (windowText.ToString().Contains(title, StringComparison.OrdinalIgnoreCase))
+                            {
+                                hWnd = h;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (hWnd != IntPtr.Zero)
+                {
+                    return (hWnd, process);
+                }
+                Thread.Sleep(1000);
+            }
+
+            return (hWnd, process);
+        }
     }
 }

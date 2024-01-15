@@ -8,7 +8,7 @@ using System.Text.Json;
 using System.Windows;
 using WindowsInput;
 using WindowsInput.Native;
-
+using Helpers;
 
 namespace HelloPhotinoApp
 {
@@ -348,11 +348,12 @@ namespace HelloPhotinoApp
         {
             new Thread((x) =>
             {
+                Thread.Sleep(250);
                 try
                 {
                     if (windowHandle == IntPtr.Zero)
                     {
-                        var result = FindWindowByTitle("YouTube");
+                        var result = Win32.FindWindowByTitle("YouTube Music");
                         windowHandle = result.mainWindowHandle;
                         windowProcess = result.process;
                     }
@@ -375,24 +376,22 @@ namespace HelloPhotinoApp
 
                     if (windowHandle == IntPtr.Zero)
                     {
-                        var result = FindWindowByTitle("YouTube");
+                        var result = Win32.FindWindowByTitle("YouTube Music");
                         windowHandle = result.mainWindowHandle;
                         windowProcess = result.process;
                     }
 
                     if (windowHandle != IntPtr.Zero)
                     {
-                        Win32.
+                        //SetWindowPos(windowHandle, IntPtr.Zero, -10000, -10000, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
 
-                                                SetForegroundWindow(windowHandle);
-                        Win32.
-                                                //SetWindowPos(windowHandle, IntPtr.Zero, -10000, -10000, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+                        //ShowWindow(windowHandle, SW_SHOWNORMAL);
 
-                                                //ShowWindow(windowHandle, SW_SHOWNORMAL);
+                        //SetWindowPos(windowHandle, IntPtr.Zero, -10000, -10000, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
 
-                                                //SetWindowPos(windowHandle, IntPtr.Zero, -10000, -10000, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
 
-                                                ShowWindow(windowHandle, Win32.SW_HIDE);
+                        Win32.SetForegroundWindow(windowHandle);
+                        Win32.ShowWindow(windowHandle, Win32.SW_HIDE);
 
                         // Bring the window to the foreground
 
@@ -412,30 +411,6 @@ namespace HelloPhotinoApp
             }).Start();
         }
 
-        static (IntPtr mainWindowHandle, Process process) FindWindowByTitle(string title)
-        {
-            IntPtr hWnd = IntPtr.Zero;
-            Process process = null;
 
-            foreach (Process pList in Process.GetProcesses())
-            {
-                IntPtr h = pList.MainWindowHandle;
-                process = pList;
-                StringBuilder windowText = new StringBuilder(256);
-                Win32.GetWindowText(h, windowText, 256);
-
-                if (!string.IsNullOrEmpty(windowText.ToString()))
-                {
-                    Debug.WriteLine($"checking {windowText.ToString()}");
-                    if (windowText.ToString().Contains(title, StringComparison.OrdinalIgnoreCase))
-                    {
-                        hWnd = h;
-                        break;
-                    }
-                }
-            }
-
-            return (hWnd, process);
-        }
     }
 }
