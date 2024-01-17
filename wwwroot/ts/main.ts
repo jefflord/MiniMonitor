@@ -7,6 +7,29 @@ class MyClass {
     static ytm: Window | null = null;
     static external = window["external"] as any;
 
+    static trySetInnerText(id: string, text: string) {
+
+        let x = document.getElementById(id) as HTMLHtmlElement;
+        if (x) {
+            x.innerText = text;
+        }
+    }
+    public static async UpdateSensorData() {
+        let me = this;
+
+        try {
+            const response: Response = await fetch('http://localhost/mini-monitor-data/');
+            const responseData: string = await response.text();
+            let data = JSON.parse(responseData);
+            me.trySetInnerText("cpuData", Math.round(+data.cpuTotal).toString());
+
+        } catch (ex) {
+            console.error(ex)
+        }
+
+        setTimeout(function () { me.UpdateSensorData() }, 1000);
+    }
+
     public static Close() {
         let me = this;
 
@@ -20,7 +43,7 @@ class MyClass {
             me.ytm = window.open("https://music.youtube.com/");
             me.external.sendMessage('FindYTM');
         } else {
-            me.external.sendMessage('ShowYTM');
+            me.external.sendMessage('ToggleYTM');
         }
 
 

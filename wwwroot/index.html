@@ -19,22 +19,52 @@
             margin: 10px;
         }
 
+        button{
+            min-width:100px;
+        }
+
         .button-container {
             display: flex;
             justify-content: space-between; /* Adjust as needed for your layout */
         }
 
         #clock {
-            font-size: 2em;
+            font-size: 8em;
             text-align: center;
             margin-top: 50px;
             color: white; /* Set font color to white */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Add drop shadow */
         }
 
         #period {
-            font-size: 0.8em; /* Set smaller font size for AM/PM */
+            font-size: 1.8em; /* Set smaller font size for AM/PM */
             color: white; /* Set font color to white */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* Add drop shadow */
         }
+
+        #dateDisplay {
+            font-size: 1.5em;
+            color: white; /* Set font color to white */
+            text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        #cpuData {
+            text-align:right;
+            _width:200px;
+            position: absolute;
+            left: 900px;
+            top: 200px;
+            font-size: 1.5em;
+            color: white; /* Set font color to white */
+            text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.8);
+        }
+
+            #cpuData::after {
+                font-size: 0.9em;
+                content: "%";
+                position: relative;
+                _left: -7px;
+            }
     </style>
 
 </head>
@@ -44,11 +74,11 @@
 
     <video autoplay loop muted>
         <!-- Replace 'your-video.mp4' with the path to your video file -->
-        <source src="assets/High tech digital world background 4k.mp4" type="video/mp4">
+        <source src="assets/bg-video-2.mp4" type="video/mp4">
     </video>
 
     <div class="container" style="_display:none">
-        <button class="primary center" onclick="MyClass.StartYTM()">Show YTM</button>
+        <button class="primary center" onclick="MyClass.StartYTM()">YT Music</button>
         <button class="primary center" onclick="MyClass.SendMessage('LastSong')">|&lt;</button>
         <button class="primary center" onclick="MyClass.PlayPause()">PlayPause</button>
         <button class="primary center" onclick="MyClass.SendMessage('NextSong')">&gt;|</button>
@@ -56,15 +86,20 @@
     </div>
 
     <div style="text-align: center;">
+        <div id="dateDisplay"></div>
         <span id="clock"></span><span id="period"></span>
     </div>
-    
+
+
+    <div id="cpuData">
+        100
+    </div>
 
 
     <div class="container" style="display:none">
         <div class="left-div">
             <button class="primary center" onclick="MyClass.StartYTM()">Start YTM</button>
-            <button class="primary center" onclick="MyClass.PlayPause()">PlayPause</button>
+            <button class="primary center" onclick="MyClass.PlayPause()">Play/Pause</button>
             <button class="primary center" onclick="MyClass.Close()">Close</button>
         </div>
 
@@ -81,6 +116,32 @@
 
 
     <script>
+
+        function calculateTimeUntilMidnight(currentDate) {
+            const midnight = new Date(currentDate);
+            midnight.setHours(24, 0, 0, 0); // Set to midnight
+
+            const timeUntilMidnight = midnight - currentDate;
+            return timeUntilMidnight;
+        }
+
+        function updateDate() {
+            const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+            const currentDate = new Date();
+            const dayOfWeek = daysOfWeek[currentDate.getDay()];
+            const month = months[currentDate.getMonth()];
+            const dayOfMonth = currentDate.getDate();
+
+            const formattedDate = `${dayOfWeek}, ${month} ${dayOfMonth}`;
+
+            document.getElementById('dateDisplay').textContent = formattedDate;
+
+            setTimeout(updateDate, calculateTimeUntilMidnight(new Date()));
+        }
+
+
         function callDotNet() {
             window.external.sendMessage('Hi .NET! 🤖');
         }
@@ -115,6 +176,11 @@
 
         // Initial update
         updateClock();
+        updateDate();
+
+        MyClass.UpdateSensorData();
+
+
     </script>
 </body>
 </html>

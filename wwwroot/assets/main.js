@@ -2,6 +2,25 @@
 class MyClass {
     static ytm = null;
     static external = window["external"];
+    static trySetInnerText(id, text) {
+        let x = document.getElementById(id);
+        if (x) {
+            x.innerText = text;
+        }
+    }
+    static async UpdateSensorData() {
+        let me = this;
+        try {
+            const response = await fetch('http://localhost/mini-monitor-data/');
+            const responseData = await response.text();
+            let data = JSON.parse(responseData);
+            me.trySetInnerText("cpuData", Math.round(+data.cpuTotal).toString());
+        }
+        catch (ex) {
+            console.error(ex);
+        }
+        setTimeout(function () { me.UpdateSensorData(); }, 1000);
+    }
     static Close() {
         let me = this;
         me.external.sendMessage('Close');
@@ -13,7 +32,7 @@ class MyClass {
             me.external.sendMessage('FindYTM');
         }
         else {
-            me.external.sendMessage('ShowYTM');
+            me.external.sendMessage('ToggleYTM');
         }
         //me.external.sendMessage('SendTest');
     }

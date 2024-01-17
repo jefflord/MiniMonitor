@@ -69,16 +69,16 @@ namespace HelloPhotinoApp
 
             new Thread(() =>
             {
+                Thread.Sleep(1);
+                ResoreWindowPosition();
+
                 Thread.Sleep(100);
                 ResoreWindowPosition();
 
-
                 //HookWindowsEvents();
-
-                Thread.Sleep(1000);
+                //Thread.Sleep(1000);
 
                 //ResoreWindowPosition();
-
 
                 //Process process = Process.GetCurrentProcess();
                 //IntPtr mainWindowHandle = process.MainWindowHandle;
@@ -92,7 +92,10 @@ namespace HelloPhotinoApp
                 //    Thread.Sleep(1000);
                 //}
 
+
             }).Start();
+
+
 
 
 
@@ -172,9 +175,9 @@ namespace HelloPhotinoApp
                 MoveDown();
                 return;
             }
-            if (message == "ShowYTM")
+            if (message == "ToggleYTM")
             {
-                ShowYTM();
+                ToggleYTM();
                 return;
             }
             if (message == "FindYTM")
@@ -338,10 +341,18 @@ namespace HelloPhotinoApp
         }
 
 
-        private static void ShowYTM()
+        private static void ToggleYTM()
         {
-            Win32.SetForegroundWindow(windowHandle);
-            Win32.ShowWindow(windowHandle, Win32.SW_SHOW);
+
+            if (Win32.IsWindowVisible(windowHandle))
+            {
+                Win32.ShowWindow(windowHandle, Win32.SW_HIDE);
+            }
+            else
+            {
+                Win32.SetForegroundWindow(windowHandle);
+                Win32.ShowWindow(windowHandle, Win32.SW_SHOW);
+            }
         }
 
         private static void FindYTM()

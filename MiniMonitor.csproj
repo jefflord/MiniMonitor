@@ -23,6 +23,13 @@
 	<ItemGroup>
 		<PackageReference Include="InputSimulator" Version="1.0.4" />
 		<PackageReference Include="Photino.NET" Version="2.6.0" />
+		<PackageReference Include="System.Management" Version="8.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Reference Include="OpenHardwareMonitorLib">
+	    <HintPath>..\openhardwaremonitor\Bin\Release\OpenHardwareMonitorLib.dll</HintPath>
+	  </Reference>
 	</ItemGroup>
 
 </Project>

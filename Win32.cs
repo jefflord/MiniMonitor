@@ -96,6 +96,10 @@ namespace Helpers
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool IsWindowVisible(IntPtr hWnd);
+
         // Delegate for the hook callback
         internal delegate void WinEventDelegate(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime);
 
