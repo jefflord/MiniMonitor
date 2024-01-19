@@ -2,16 +2,17 @@
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<ApplicationIcon>wwwroot/assets/dino.ico</ApplicationIcon>
+		<ApplicationIcon>wwwroot/assets/Monitor-Tablet-icon.ico</ApplicationIcon>
 		<TargetFramework>net8.0</TargetFramework>
 		<Platforms>AnyCPU</Platforms>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<Compile Remove="wwwroot\**" />
-		<Content Include="wwwroot\assets\dino.ico">
+		<Content Include="wwwroot\assets\Monitor-Tablet-icon.ico">
 		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Content>
 
@@ -27,9 +28,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Reference Include="OpenHardwareMonitorLib">
-	    <HintPath>..\openhardwaremonitor\Bin\Release\OpenHardwareMonitorLib.dll</HintPath>
-	  </Reference>
+	  <ProjectReference Include="..\OpenHardwareMonitorServer\OpenHardwareMonitorServer.csproj" />
 	</ItemGroup>
 
 </Project>

@@ -9,11 +9,14 @@ using System.Windows;
 using WindowsInput;
 using WindowsInput.Native;
 using Helpers;
+using System;
 
 namespace HelloPhotinoApp
 {
     class Program
     {
+
+        static Process process = null;
         private class Config
         {
             public int x { get; set; }
@@ -27,7 +30,7 @@ namespace HelloPhotinoApp
         static void Main(string[] args)
         {
             // Window title declared here for visibility
-            string windowTitle = "Photino for .NET Demo App";
+            string windowTitle = "MiniMonitor";
 
             // Creating a new PhotinoWindow instance with the fluent API
             var window = new PhotinoWindow()
@@ -37,7 +40,7 @@ namespace HelloPhotinoApp
                 .SetSize(new Size(1940, 490))
                 // Center window in the middle of the screen
                 .Center()
-                .SetIconFile(Path.GetFullPath("wwwroot\\assets\\dino.ico"))
+                .SetIconFile(Path.GetFullPath("wwwroot\\assets\\Monitor-Tablet-icon.ico"))
                 .SetChromeless(true)
                 // Users can resize windows by default.
                 // Let's make this one fixed instead.
@@ -74,6 +77,26 @@ namespace HelloPhotinoApp
 
                 Thread.Sleep(100);
                 ResoreWindowPosition();
+
+
+                if (File.Exists("OpenHardwareMonitorServer.exe"))
+                {
+                    ProcessStartInfo startInfo = new ProcessStartInfo
+                    {
+                        FileName = "OpenHardwareMonitorServer.exe",
+                        CreateNoWindow = true,        // Do not create a window for the process
+                        UseShellExecute = false,      // Do not use the system shell to start the process
+                        RedirectStandardOutput = true, // Redirect standard output so it won't block
+                        RedirectStandardError = true   // Redirect standard error so it won't block
+                    };
+
+                    process = new Process
+                    {
+                        StartInfo = startInfo
+                    };
+
+                    process.Start(); // Start the process
+                }
 
                 //HookWindowsEvents();
                 //Thread.Sleep(1000);
@@ -130,7 +153,16 @@ namespace HelloPhotinoApp
 
             if (message == "Close")
             {
+                if (process != null && !process.HasExited)
+                {
+                    process.CloseMainWindow();
+                    try
+                    {
+                        process.Kill();                        
+                    }
+                    catch { }
 
+                }
                 if (windowProcess != null)
                 {
                     windowProcess.Kill();
