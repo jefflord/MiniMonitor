@@ -36,7 +36,7 @@ namespace OpenHardwareMonitorServer
 
 
 
-
+            //Debugger.Launch();
             string url = "http://localhost/mini-monitor-data/";
 
             using (HttpListener listener = new HttpListener())

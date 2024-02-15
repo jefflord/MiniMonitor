@@ -434,8 +434,8 @@ namespace HelloPhotinoApp
 
 
                         Win32.SetForegroundWindow(windowHandle);
-                        Win32.ShowWindow(windowHandle, Win32.SW_HIDE);
 
+                        //Win32.ShowWindow(windowHandle, Win32.SW_HIDE);
                         // Bring the window to the foreground
 
 
