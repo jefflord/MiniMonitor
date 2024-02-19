@@ -10,6 +10,7 @@ using WindowsInput;
 using WindowsInput.Native;
 using Helpers;
 using System;
+using LibreHardwareMonitor.Hardware;
 
 namespace HelloPhotinoApp
 {
@@ -79,7 +80,7 @@ namespace HelloPhotinoApp
                 ResoreWindowPosition();
 
 
-                if (File.Exists("OpenHardwareMonitorServer.exe"))
+                if (false && File.Exists("OpenHardwareMonitorServer.exe"))
                 {
                     ProcessStartInfo startInfo = new ProcessStartInfo
                     {
@@ -97,6 +98,31 @@ namespace HelloPhotinoApp
 
                     process.Start(); // Start the process
                 }
+
+                // without _some_ delay it will crash on start 
+                Thread.Sleep(1000);
+
+                computer.Open();
+                computer.IsGpuEnabled = true;
+                computer.IsCpuEnabled = true;
+
+                while (true)
+                {
+                    try
+                    {
+                        var data = GetSensorData();
+
+                        window.SendWebMessage(data);
+                        Thread.Sleep(1000);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex);
+                        Thread.Sleep(1000);
+                    }
+
+                }
+
 
                 //HookWindowsEvents();
                 //Thread.Sleep(1000);
@@ -125,6 +151,32 @@ namespace HelloPhotinoApp
 
 
             window.WaitForClose(); // Starts the application event loop
+        }
+
+        static Computer computer = new Computer();
+
+        private static string GetSensorData()
+        {
+
+            var gpu = computer.Hardware.First(x => x.HardwareType == HardwareType.GpuNvidia);
+            var cpu = computer.Hardware.First(x => x.HardwareType == HardwareType.Cpu);
+
+            gpu.Update();
+            cpu.Update();
+
+            var cpuTotal = cpu.Sensors.FirstOrDefault(y => y.Name == "CPU Total");
+
+            return JsonSerializer.Serialize(new
+            {
+                DataType = "SensorData",
+                temp = gpu.Sensors.FirstOrDefault(s => s.Name == "GPU Core" && s.SensorType == SensorType.Temperature).Value,
+                load = gpu.Sensors.FirstOrDefault(s => s.Name == "GPU Core" && s.SensorType == SensorType.Load).Value,
+                coreClock = gpu.Sensors.FirstOrDefault(s => s.Name == "GPU Core" && s.SensorType == SensorType.Clock).Value,
+                memClock = gpu.Sensors.FirstOrDefault(s => s.Name == "GPU Memory" && s.SensorType == SensorType.Clock).Value,
+                //fanPercent = gpu.Sensors.FirstOrDefault(s => s.Name == "GPU Fan" && s.SensorType == SensorType.Control).Value,
+                //fanRpm = gpu.Sensors.FirstOrDefault(s => s.Name == "GPU" && s.SensorType == SensorType.Fan).Value,
+                cpuTotal = cpuTotal.Value
+            });
         }
 
         static IntPtr windowHandle = IntPtr.Zero;
@@ -158,7 +210,7 @@ namespace HelloPhotinoApp
                     process.CloseMainWindow();
                     try
                     {
-                        process.Kill();                        
+                        process.Kill();
                     }
                     catch { }
 
@@ -349,8 +401,7 @@ namespace HelloPhotinoApp
 
             int newX = currentX;
             int newY = currentY - 1;
-            Win32.
-                        SetWindowPos(mainWindowHandle, Win32.HWND_TOP, newX, newY, 0, 0, Win32.SWP_NOSIZE | Win32.SWP_NOZORDER);
+            Win32.SetWindowPos(mainWindowHandle, Win32.HWND_TOP, newX, newY, 0, 0, Win32.SWP_NOSIZE | Win32.SWP_NOZORDER);
             SaveWindowLocation(newX, newY);
         }
 
@@ -368,8 +419,7 @@ namespace HelloPhotinoApp
 
             int newX = currentX;
             int newY = currentY + 1;
-            Win32.
-                        SetWindowPos(mainWindowHandle, Win32.HWND_TOP, newX, newY, 0, 0, Win32.SWP_NOSIZE | Win32.SWP_NOZORDER);
+            Win32.SetWindowPos(mainWindowHandle, Win32.HWND_TOP, newX, newY, 0, 0, Win32.SWP_NOSIZE | Win32.SWP_NOZORDER);
         }
 
 

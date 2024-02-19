@@ -8,6 +8,15 @@ class MyClass {
             x.innerText = text;
         }
     }
+    //HandleMessage
+    static HandleMessage(data) {
+        let me = this;
+        let dataObject = JSON.parse(data);
+        if (dataObject.DataType === "SensorData") {
+            me.trySetInnerText("cpuData", Math.round(+dataObject.cpuTotal).toString());
+        }
+        //console.log(`data: ${data}!`)
+    }
     static async UpdateSensorData() {
         let me = this;
         try {

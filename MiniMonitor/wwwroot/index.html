@@ -147,7 +147,7 @@
         }
 
         if (window.external && window.external.receiveMessage) {
-            window.external.receiveMessage(message => alert(message));
+            window.external.receiveMessage(message => MyClass.HandleMessage(message));
         }
 
 
@@ -178,7 +178,7 @@
         updateClock();
         updateDate();
 
-        MyClass.UpdateSensorData();
+        // MyClass.UpdateSensorData();
 
 
     </script>
