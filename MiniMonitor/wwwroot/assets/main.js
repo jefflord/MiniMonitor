@@ -16,12 +16,14 @@ class MyClass {
         let dataObject = JSON.parse(data);
         if (dataObject.DataType === "CalendarData") {
             me.lastCalendarData = dataObject;
+            if (me.lastCalendarInterval) {
+                clearInterval(me.lastCalendarInterval);
+            }
             var updateCalData = function () {
                 if (dataObject.HasEvents === false) {
                     MyClass.setStyleDisplay("nextMeeting", "none");
                     return;
                 }
-                MyClass.setStyleDisplay("nextMeeting", "block");
                 me.trySetInnerText("meetingTitle", dataObject.Summary);
                 let timeMessage = "";
                 let minutesUntil = (new Date(dataObject.StartTimeUtc).getTime() - new Date().getTime()) / 1000.0 / 60.0;
@@ -47,16 +49,7 @@ class MyClass {
                     document.getElementById("nextMeeting")?.classList.add("nextMeetingDueSoon");
                 }
                 MyClass.setStyleDisplay("nextMeeting", "block");
-                //if (dataObject.WaitOneGotSignal === true) {
-                //    MyClass.setStyleDisplay("nextMeeting", "none");
-                //    setTimeout(function () {
-                //        MyClass.setStyleDisplay("nextMeeting", "block");
-                //    }, 1000);
-                //}
             };
-            if (me.lastCalendarInterval) {
-                clearInterval(me.lastCalendarInterval);
-            }
             me.lastCalendarInterval = setInterval(updateCalData, 1000);
         }
         else if (dataObject.DataType === "SensorData") {
@@ -105,6 +98,9 @@ class MyClass {
     static UpdateCalendar() {
         let me = this;
         MyClass.setStyleDisplay("nextMeeting", "none");
+        if (me.lastCalendarInterval) {
+            clearInterval(me.lastCalendarInterval);
+        }
         me.external.sendMessage("UpdateCalendar");
     }
     static PlayPause() {
