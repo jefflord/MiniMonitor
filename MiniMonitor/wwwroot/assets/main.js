@@ -9,13 +9,66 @@ class MyClass {
         }
     }
     //HandleMessage
+    static lastCalendarData = null;
+    static lastCalendarInterval = 0;
     static HandleMessage(data) {
         let me = this;
         let dataObject = JSON.parse(data);
-        if (dataObject.DataType === "SensorData") {
+        if (dataObject.DataType === "CalendarData") {
+            me.lastCalendarData = dataObject;
+            var updateCalData = function () {
+                if (dataObject.HasEvents === false) {
+                    MyClass.setStyleDisplay("nextMeeting", "none");
+                    return;
+                }
+                MyClass.setStyleDisplay("nextMeeting", "block");
+                me.trySetInnerText("meetingTitle", dataObject.Summary);
+                let timeMessage = "";
+                let minutesUntil = (new Date(dataObject.StartTimeUtc).getTime() - new Date().getTime()) / 1000.0 / 60.0;
+                let formattedRel = (luxon.DateTime.fromISO(dataObject.StartTimeUtc)).toRelative({ base: luxon.DateTime.now(), style: 'long' });
+                if (minutesUntil > 0) {
+                    timeMessage = `${formattedRel}`;
+                }
+                else {
+                    timeMessage = `started ${formattedRel}`;
+                }
+                me.trySetInnerText("timeUntilMeeting", timeMessage);
+                //me.trySetInnerText("timeUntilMeeting", (minutesUntil).toString());
+                document.getElementById("nextMeeting")?.classList.remove("nextMeetingDueSoon");
+                document.getElementById("nextMeeting")?.classList.remove("nextMeetingOverDue");
+                document.getElementById("nextMeeting")?.classList.remove("nextMeetingInProgress");
+                if (minutesUntil <= 0) {
+                    document.getElementById("nextMeeting")?.classList.add("nextMeetingInProgress");
+                }
+                else if (minutesUntil <= 2) {
+                    document.getElementById("nextMeeting")?.classList.add("nextMeetingOverDue");
+                }
+                else if (minutesUntil <= 15) {
+                    document.getElementById("nextMeeting")?.classList.add("nextMeetingDueSoon");
+                }
+                MyClass.setStyleDisplay("nextMeeting", "block");
+                //if (dataObject.WaitOneGotSignal === true) {
+                //    MyClass.setStyleDisplay("nextMeeting", "none");
+                //    setTimeout(function () {
+                //        MyClass.setStyleDisplay("nextMeeting", "block");
+                //    }, 1000);
+                //}
+            };
+            if (me.lastCalendarInterval) {
+                clearInterval(me.lastCalendarInterval);
+            }
+            me.lastCalendarInterval = setInterval(updateCalData, 1000);
+        }
+        else if (dataObject.DataType === "SensorData") {
             me.trySetInnerText("cpuData", Math.round(+dataObject.cpuTotal).toString());
         }
         //console.log(`data: ${data}!`)
+    }
+    static setStyleDisplay(id, value) {
+        let ele = document.getElementById(id);
+        if (ele != null) {
+            ele.style.display = value;
+        }
     }
     static async UpdateSensorData() {
         let me = this;
@@ -48,6 +101,11 @@ class MyClass {
     static SendMessage(message) {
         let me = this;
         me.external.sendMessage(message);
+    }
+    static UpdateCalendar() {
+        let me = this;
+        MyClass.setStyleDisplay("nextMeeting", "none");
+        me.external.sendMessage("UpdateCalendar");
     }
     static PlayPause() {
         let me = this;

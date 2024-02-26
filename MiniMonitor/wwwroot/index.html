@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="assets/main.css" />
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/3.4.4/luxon.min.js" integrity="sha512-dUlSLLkxslGILhPdCkALwk4szPhp3xmZIKFtlUD+O9Lslq41Aksmdt5OGqpomDoT4FsCUH70jQU8ezZHI3v1RQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
     <style>
         /* Add some basic styling to the divs */
         .container {
@@ -19,8 +21,8 @@
             margin: 10px;
         }
 
-        button{
-            min-width:100px;
+        button {
+            min-width: 100px;
         }
 
         .button-container {
@@ -49,8 +51,8 @@
         }
 
         #cpuData {
-            text-align:right;
-            _width:200px;
+            text-align: right;
+            _width: 200px;
             position: absolute;
             left: 900px;
             top: 200px;
@@ -65,6 +67,32 @@
                 position: relative;
                 _left: -7px;
             }
+
+        #nextMeeting {
+            text-align: left;
+            position: absolute;
+            left: 30px;
+            top: 175px;
+            font-size: 1.5em;
+            color: white; /* Set font color to white */
+            text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        #timeUntilMeeting {
+            font-size: 0.8em;
+        }
+
+        .nextMeetingDueSoon > span {
+            color: yellow;
+        }
+
+        .nextMeetingOverDue > span {
+            color: red;
+        }
+
+        .nextMeetingInProgress > span {
+            color: lightblue;
+        }
     </style>
 
 </head>
@@ -93,6 +121,12 @@
 
     <div id="cpuData">
         100
+    </div>
+
+    <div id="nextMeeting" class="" onclick="MyClass.UpdateCalendar()">
+        <span id="meetingTitle">Loading</span>
+        <br />
+        <span id="timeUntilMeeting">...</span>
     </div>
 
 

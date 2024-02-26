@@ -11,6 +11,11 @@ using WindowsInput.Native;
 using Helpers;
 using System;
 using LibreHardwareMonitor.Hardware;
+using System.Net;
+using Ical.Net;
+using Ical.Net.CalendarComponents;
+using Ical.Net.DataTypes;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace HelloPhotinoApp
 {
@@ -30,6 +35,8 @@ namespace HelloPhotinoApp
         [STAThread]
         static void Main(string[] args)
         {
+
+
             // Window title declared here for visibility
             string windowTitle = "MiniMonitor";
 
@@ -71,6 +78,132 @@ namespace HelloPhotinoApp
                 .Load("wwwroot/index.html"); // Can be used with relative path strings or "new URI()" instance to load a website.
 
 
+            StartCalDataThread(window);
+
+            StartSensorThread(window);
+
+            window.WaitForClose(); // Starts the application event loop
+        }
+
+        private static int maxErrors = 10;
+        private static int errorCount = 0;
+
+        private static AutoResetEvent AutoResetEventForCalendar = new AutoResetEvent(false);
+
+        private static async Task GetCalData(PhotinoWindow window)
+        {
+            var icalUrl = @"https://outlook.office365.com/owa/calendar/7b349e7c93834c55814a92ab2613f6e6@pmg.net/e41059910ba844ceac4b7cb176396a2213589527107329255170/calendar.ics";
+
+
+            using (var client = new WebClient())
+            {
+                // Provide the URL of the file to download
+
+                // Provide the local path where the file will be saved
+                string localFilePath = "calendar.ics";
+
+                bool waitOneGotSignal = false;
+
+                try
+                {
+                    while (true)
+                    {
+                        if (errorCount >= maxErrors)
+                        {
+                            return;
+                        }
+
+                        await client.DownloadFileTaskAsync(new Uri(icalUrl), localFilePath);
+
+
+                        var calendar = Calendar.Load(File.ReadAllText(localFilePath));
+
+                        //var fullPath = Path.GetFullPath(localFilePath);
+
+                        var occurrencesForToday = calendar.GetOccurrences(DateTime.Now.AddMinutes(-10), DateTime.Now.AddDays(3)).Where(o => o.Period.StartTime.Date >= DateTime.Today).OrderBy(o => o.Period.StartTime).Take(6);
+
+
+                        object data;
+                        if (occurrencesForToday.Count() > 0)
+                        {
+                            foreach (var ev in occurrencesForToday)
+                            {
+                                var originalEvent = (CalendarEvent)ev.Source;
+
+                                if (ev.Period.StartTime.AsUtc < DateTime.UtcNow.AddMinutes(-10))
+                                {
+                                    // too old, skip
+                                    continue;
+                                }
+
+                                data = new object { };
+
+                                data = new
+                                {
+                                    DataType = "CalendarData",
+                                    HasEvents = true,
+                                    Summary = originalEvent.Summary,
+                                    StartTimeUtc = ev.Period.StartTime.AsUtc.ToString("O"),
+                                    WaitOneGotSignal = waitOneGotSignal
+                                };
+
+                                window.SendWebMessage(JsonSerializer.Serialize(data));
+
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            data = new
+                            {
+                                DataType = "CalendarData",
+                                HasEvents = false
+                            };
+                            window.SendWebMessage(JsonSerializer.Serialize(data));
+                        }
+
+
+
+                        //
+                        // Print the events for today
+                        if (false)
+                        {
+                            foreach (var ev in occurrencesForToday)
+                            {
+                                var originalEvent = (CalendarEvent)ev.Source;
+                                Console.WriteLine($"Summary: {originalEvent.Summary}");
+                                Console.WriteLine($"Start Time: {ev.Period.StartTime}");
+                                Console.WriteLine($"End Time: {ev.Period.EndTime}");
+                                Console.WriteLine();
+                            }
+                        }
+                        errorCount = 0;
+                        waitOneGotSignal = AutoResetEventForCalendar.WaitOne(5 * 60 * 1000);
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    errorCount++;
+                    Console.WriteLine($"Error downloading file: {ex.Message}");
+                    Thread.Sleep(10000);
+                }
+            }
+
+        }
+
+        private static void StartCalDataThread(PhotinoWindow window)
+        {
+            new Thread(async () =>
+            {
+                await GetCalData(window);
+
+            }).Start();
+
+        }
+
+        private static void StartSensorThread(PhotinoWindow window)
+        {
             new Thread(() =>
             {
                 Thread.Sleep(1);
@@ -143,14 +276,6 @@ namespace HelloPhotinoApp
 
 
             }).Start();
-
-
-
-
-
-
-
-            window.WaitForClose(); // Starts the application event loop
         }
 
         static Computer computer = new Computer();
@@ -223,6 +348,11 @@ namespace HelloPhotinoApp
             }
 
 
+            if (message == "UpdateCalendar")
+            {
+                AutoResetEventForCalendar.Set();
+                return;
+            }
             if (message == "PlayPause")
             {
                 YT_SendKey(VirtualKeyCode.SPACE);
