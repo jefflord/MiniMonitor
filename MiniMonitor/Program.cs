@@ -563,7 +563,8 @@ namespace HelloPhotinoApp
             else
             {
                 Win32.SetForegroundWindow(windowHandle);
-                Win32.ShowWindow(windowHandle, Win32.SW_SHOW);
+                //Win32.ShowWindow(windowHandle, Win32.SW_SHOW);
+                Win32.ShowWindow(windowHandle, Win32.SW_SHOWNORMAL);
             }
         }
 
