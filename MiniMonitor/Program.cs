@@ -27,6 +27,7 @@ namespace HelloPhotinoApp
         {
             public int x { get; set; }
             public int y { get; set; }
+            public string[]? icsFiles { get; set; }
         }
 
 
@@ -92,7 +93,9 @@ namespace HelloPhotinoApp
 
         private static async Task GetCalData(PhotinoWindow window)
         {
-            var icalUrl = @"https://outlook.office365.com/owa/calendar/7b349e7c93834c55814a92ab2613f6e6@pmg.net/e41059910ba844ceac4b7cb176396a2213589527107329255170/calendar.ics";
+
+            var config = LoadConfig();
+
 
 
             using (var client = new WebClient())
@@ -104,23 +107,20 @@ namespace HelloPhotinoApp
 
                 bool waitOneGotSignal = false;
 
-                try
+                while (true)
                 {
-                    while (true)
+                    try
                     {
-                        if (errorCount >= maxErrors)
+                        List<Occurrence> occurrencesForToday = new List<Occurrence>();
+                        foreach (var icalUrl in config.icsFiles)
                         {
-                            return;
+                            await client.DownloadFileTaskAsync(new Uri(icalUrl), localFilePath);
+
+                            var calendar = Calendar.Load(File.ReadAllText(localFilePath));
+
+                            occurrencesForToday.AddRange(calendar.GetOccurrences(DateTime.Now.AddMinutes(-10), DateTime.Now.AddDays(3)).Where(o => o.Period.StartTime.Date >= DateTime.Today).OrderBy(o => o.Period.StartTime).Take(6).ToList());
                         }
 
-                        await client.DownloadFileTaskAsync(new Uri(icalUrl), localFilePath);
-
-
-                        var calendar = Calendar.Load(File.ReadAllText(localFilePath));
-
-                        //var fullPath = Path.GetFullPath(localFilePath);
-
-                        var occurrencesForToday = calendar.GetOccurrences(DateTime.Now.AddMinutes(-10), DateTime.Now.AddDays(3)).Where(o => o.Period.StartTime.Date >= DateTime.Today).OrderBy(o => o.Period.StartTime).Take(6);
 
 
                         object data;
@@ -179,15 +179,16 @@ namespace HelloPhotinoApp
                         }
                         errorCount = 0;
                         waitOneGotSignal = AutoResetEventForCalendar.WaitOne(5 * 60 * 1000);
-                    }
 
+                    }
+                    catch (Exception ex)
+                    {
+                        errorCount++;
+                        Console.WriteLine($"Error downloading file: {ex.Message}");
+                        Thread.Sleep(60000);
+                    }
                 }
-                catch (Exception ex)
-                {
-                    errorCount++;
-                    Console.WriteLine($"Error downloading file: {ex.Message}");
-                    Thread.Sleep(10000);
-                }
+
             }
 
         }
@@ -468,7 +469,11 @@ namespace HelloPhotinoApp
 
         private static void SaveWindowLocation(int x, int y)
         {
-            var config = new Config { x = x, y = y };
+
+            var config = LoadConfig();
+            config.x = x;
+            config.y = y;
+
             string json = JsonSerializer.Serialize(config);
 
             // Write JSON to file 
