@@ -70,15 +70,26 @@
 
         #nextMeeting {
             text-align: left;
-            position: absolute;
-            left: 30px;
-            top: 175px;
+            left: 30px;            
             font-size: 1.5em;
             color: white; /* Set font color to white */
             text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.8);
+            overflow-y: auto; /* Enable vertical scrolling if content exceeds the max height */
+                      
+        }
+
+        #meetingTitle {
+            position: absolute;
+            left: 30px;
+            bottom: 40px;
+            width: 250px;
+            white-space: normal; /* Allow text wrapping */
         }
 
         #timeUntilMeeting {
+            left: 30px;
+            position: absolute;
+            top: 205px;
             font-size: 0.8em;
         }
 
@@ -124,7 +135,7 @@
     </div>
 
     <div id="nextMeeting" class="" onclick="MyClass.UpdateCalendar()">
-        <span id="meetingTitle">Loading</span>
+        <span id="meetingTitle">Generate Lorem Ipsum placeholder text. Select the number of characters...</span>
         <br />
         <span id="timeUntilMeeting">...</span>
     </div>
