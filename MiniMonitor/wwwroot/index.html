@@ -78,6 +78,19 @@
                       
         }
 
+        #playingSong {
+            text-align: right;
+            _width: 200px;
+            position: absolute;
+            right: 20px;
+            top: 100px;
+            font-size: 1.5em;
+            color: white; /* Set font color to white */
+            text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.8);
+        }
+
+       
+
         #meetingTitle {
             position: absolute;
             left: 30px;
@@ -117,7 +130,7 @@
     </video>
 
     <div class="container" style="_display:none">
-        <button class="primary center" onclick="MyClass.StartYTM()">YT Music</button>
+        <button class="primary center" onclick="MyClass.ToggleYTM()">YT Music</button>
         <button class="primary center" onclick="MyClass.SendMessage('LastSong')">|&lt;</button>
         <button class="primary center" onclick="MyClass.PlayPause()">Play/Pause</button>
         <button class="primary center" onclick="MyClass.SendMessage('NextSong')">&gt;|</button>
@@ -133,6 +146,10 @@
     <div id="cpuData">
         100
     </div>
+    <div id="playingSong">
+        playingSong
+    </div>
+    
 
     <div id="nextMeeting" class="" onclick="MyClass.UpdateCalendar()">
         <span id="meetingTitle">Generate Lorem Ipsum placeholder text. Select the number of characters...</span>
@@ -143,7 +160,7 @@
 
     <div class="container" style="display:none">
         <div class="left-div">
-            <button class="primary center" onclick="MyClass.StartYTM()">Start YTM</button>
+            <button class="primary center" onclick="MyClass.ToggleYTM()">Toggle YTM</button>
             <button class="primary center" onclick="MyClass.PlayPause()">Play/Pause</button>
             <button class="primary center" onclick="MyClass.Close()">Close</button>
         </div>
