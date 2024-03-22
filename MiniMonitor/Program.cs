@@ -16,6 +16,12 @@ using Ical.Net;
 using Ical.Net.CalendarComponents;
 using Ical.Net.DataTypes;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using HidSharp.Utility;
+using OpenQA.Selenium.Edge;
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+using static System.Collections.Specialized.BitVector32;
+using System.Reflection;
 
 namespace HelloPhotinoApp
 {
@@ -23,6 +29,8 @@ namespace HelloPhotinoApp
     {
 
         static Process process = null;
+        static ChromeDriver driver = null;
+        static PhotinoWindow window;
         private class Config
         {
             public int x { get; set; }
@@ -42,7 +50,7 @@ namespace HelloPhotinoApp
             string windowTitle = "MiniMonitor";
 
             // Creating a new PhotinoWindow instance with the fluent API
-            var window = new PhotinoWindow()
+            window = new PhotinoWindow()
                 .SetTitle(windowTitle)
                 // Resize to a percentage of the main monitor work area
                 .SetUseOsDefaultSize(false)
@@ -80,6 +88,8 @@ namespace HelloPhotinoApp
 
 
             StartCalDataThread(window);
+
+            StartChrome();
 
             StartSensorThread(window);
 
@@ -197,6 +207,7 @@ namespace HelloPhotinoApp
         {
             new Thread(async () =>
             {
+                Thread.Sleep(2000);
                 await GetCalData(window);
 
             }).Start();
@@ -305,8 +316,11 @@ namespace HelloPhotinoApp
             });
         }
 
-        static IntPtr windowHandle = IntPtr.Zero;
-        static Process windowProcess = null;
+        //static IntPtr windowHandle = IntPtr.Zero;
+        //static Process windowProcess = null;
+        static (IntPtr mainWindowHandle, Process process) YTChromeWindow;
+
+
 
         //public static void HookWindowsEvents()
         //{
@@ -341,10 +355,18 @@ namespace HelloPhotinoApp
                     catch { }
 
                 }
-                if (windowProcess != null)
+                if (YTChromeWindow.process != null)
                 {
-                    windowProcess.Kill();
+                    YTChromeWindow.process.Kill();
                 }
+
+                if (driver != null)
+                {
+                    driver.Close();
+                }
+
+                CleanupChrome();
+
                 Environment.Exit(0);
             }
 
@@ -356,17 +378,17 @@ namespace HelloPhotinoApp
             }
             if (message == "PlayPause")
             {
-                YT_SendKey(VirtualKeyCode.SPACE);
+                YT_SendKey(Keys.Space);
                 return;
             }
             if (message == "NextSong")
             {
-                YT_SendKey(VirtualKeyCode.VK_J);
+                YT_SendKey("j");
                 return;
             }
             if (message == "LastSong")
             {
-                YT_SendKey(VirtualKeyCode.VK_K);
+                YT_SendKey("k");
                 return;
             }
 
@@ -375,31 +397,42 @@ namespace HelloPhotinoApp
                 MoveLeft();
                 return;
             }
+
             if (message == "MoveRight")
             {
                 MoveRight();
                 return;
             }
+
             if (message == "MoveUp")
             {
                 MoveUp();
                 return;
             }
+
             if (message == "MoveDown")
             {
                 MoveDown();
                 return;
             }
+
+            //if (message == "TestWebDriver")
+            //{
+            //    TestWebDriver();
+            //    return;
+            //}
+
             if (message == "ToggleYTM")
             {
                 ToggleYTM();
                 return;
             }
-            if (message == "FindYTM")
-            {
-                FindYTM();
-                return;
-            }
+
+            //if (message == "FindYTM")
+            //{
+            //    ShowYTM();
+            //    return;
+            //}
 
 
             //window.Width = window.Width + 1;
@@ -413,6 +446,168 @@ namespace HelloPhotinoApp
             window.SendWebMessage(response);
 
             response = $"Received message: \"{message}\"xxx";
+        }
+
+        private static void KillNamedProcseses(string[] processNames)
+        {
+
+
+
+            foreach (var name in processNames)
+            {
+                var pids = "";
+
+                var quitTime = DateTime.UtcNow.AddSeconds(10);
+                while (quitTime > DateTime.UtcNow && Process.GetProcessesByName(name).Length > 0)
+                {
+
+                    foreach (var process in Process.GetProcessesByName(name))
+                    {
+
+                        pids += $"/PID {process.Id} ";
+                    }
+
+                    if (pids.Length <= 0)
+                    {
+                        break;
+                    }
+
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "taskkill",
+                        Arguments = $"/F {pids}",
+                        CreateNoWindow = true,
+                        UseShellExecute = false
+                    })?.WaitForExit();
+
+                    if (Process.GetProcessesByName(name).Length > 0)
+                    {
+                        Thread.Sleep(100);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+        private static void TestWebDriver()
+        {
+            //Edge();
+
+            Chrome();
+
+        }
+
+        private static (IntPtr mainWindowHandle, Process process) Chrome()
+        {
+            CleanupChrome();
+
+            var options = new ChromeOptions();
+
+            // options.AddArguments(new List<string>() { "headless" });
+            options.AddArguments(new List<string>() { "window-size=1920,1080" });
+            options.AddArguments(new List<string>() { "--disable-info" });
+
+            options.AddArguments(@"user-data-dir=C:\Users\jeff\AppData\Local\Google\Chrome\User Data");
+
+            options.AddArguments(new List<string>() { $"--app=https://music.youtube.com/" });
+            options.AddExcludedArgument("enable-automation");
+            options.AddAdditionalOption("useAutomationExtension", false);
+
+            driver = new ChromeDriver(options);
+
+            var chromedriverFindWindowByTitleResult = Win32.FindWindowByTitle(Path.GetFullPath("chromedriver.exe"), "chrome", null);
+            if (chromedriverFindWindowByTitleResult.process != null)
+            {
+                if (Win32.IsWindowVisible(chromedriverFindWindowByTitleResult.process.MainWindowHandle))
+                {
+                    Win32.ShowWindow(chromedriverFindWindowByTitleResult.process.MainWindowHandle, Win32.SW_HIDE);
+                }
+            }
+
+            while (YTChromeWindow.process == null)
+            {
+                YTChromeWindow = Win32.FindWindowByTitle("YouTube Music", "chrome", null);
+                Thread.Sleep(100);
+            }
+
+            var js = File.ReadAllText(Path.GetFullPath(@"wwwroot\assets\main.js"));
+            driver.ExecuteScript(js);
+
+            return YTChromeWindow;
+
+        }
+
+        private static void CleanupChrome()
+        {
+            var p = Path.GetFullPath("chromedriver.exe");
+            while (true)
+            {
+                var result = Win32.FindWindowByTitle(p, "chrome", null);
+                if (result.process == null)
+                {
+                    break;
+                }
+                result.process.Kill();
+                Thread.Sleep(100);
+            }
+
+            KillNamedProcseses(new string[] { "chromedriver", "chrome" });
+        }
+
+        private static void Edge()
+        {
+            var p = Path.GetFullPath("msedgedriver.exe");
+
+
+
+            while (true)
+            {
+                var result = Win32.FindWindowByTitle(p, "msedge", null);
+                if (result.process == null)
+                {
+                    break;
+                }
+                result.process.Kill();
+                Thread.Sleep(100);
+            }
+
+            KillNamedProcseses(new string[] { "msedgedriver" });
+
+            var options = new EdgeOptions();
+
+            options.AddArguments(new List<string>() { "window-size=1280,800" });
+            options.AddArguments(new List<string>() { "--disable-info" });
+
+
+            //options.AddArguments("user-data-dir=C:\\Users\\jeff\\AppData\\Local\\Microsoft\\Edge\\User Data");
+
+            //options.AddArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0 Config/90.2.1101.2");
+
+            options.AddArguments(new List<string>() { $"--app=https://music.youtube.com/" });
+            //options.AddExcludedArgument("enable-automation");
+            //options.AddAdditionalOption("useAutomationExtension", true);
+
+            var driver = new EdgeDriver(options);
+
+            try
+            {
+                //driver.Url = "https://music.youtube.com/";
+                //--app=https://music.youtube.com/
+
+                //var element = driver.FindElement(By.Id("sb_form_q"));
+                //element.SendKeys("WebDriver");
+                //element.Submit();
+
+
+            }
+            finally
+            {
+                //driver.Quit();
+
+            }
         }
 
         //static Screen GetScreenFromPoint(Point point)
@@ -557,87 +752,199 @@ namespace HelloPhotinoApp
             Win32.SetWindowPos(mainWindowHandle, Win32.HWND_TOP, newX, newY, 0, 0, Win32.SWP_NOSIZE | Win32.SWP_NOZORDER);
         }
 
+        private static string GetCurrentSong()
+        {
+            var js = $"return Util.GetCurrentSong()";
+            var song = driver.ExecuteScript(js) as string;
+            return song;
+        }
 
+        private static void StartChrome()
+        {
+
+            var result = Chrome();
+
+
+            var t = new Thread(() =>
+            {
+
+                while (true)
+                {
+                    Thread.Sleep(1000);
+                    if (driver != null)
+                    {
+                        try
+                        {
+                            var song = GetCurrentSong();
+
+                            var data = new
+                            {
+                                DataType = "MusicUpdate",
+                                Song = song
+                            };
+                            window.SendWebMessage(JsonSerializer.Serialize(data));
+                        }
+                        catch (Exception e)
+                        {
+                            var data = new
+                            {
+                                DataType = "MusicUpdate",
+                                Song = e.Message
+                            };
+                            window.SendWebMessage(JsonSerializer.Serialize(data));
+                        }
+                    }
+                }
+
+            });
+            t.Start();
+
+            YTChromeWindow = result;
+        }
         private static void ToggleYTM()
         {
 
-            if (Win32.IsWindowVisible(windowHandle))
+            if (YTChromeWindow.process == null)
             {
-                Win32.ShowWindow(windowHandle, Win32.SW_HIDE);
+                return;
+            }
+
+            if (Win32.IsWindowVisible(YTChromeWindow.process.MainWindowHandle))
+            {
+                //Win32.ShowWindow(windowHandle, Win32.SW_HIDE);
+                Win32.ShowWindow(YTChromeWindow.process.MainWindowHandle, Win32.SW_HIDE);
             }
             else
             {
-                Win32.SetForegroundWindow(windowHandle);
+                //Win32.SetForegroundWindow(windowHandle);
+                Win32.SetForegroundWindow(YTChromeWindow.process.MainWindowHandle);
                 //Win32.ShowWindow(windowHandle, Win32.SW_SHOW);
-                Win32.ShowWindow(windowHandle, Win32.SW_SHOWNORMAL);
+                //Win32.ShowWindow(windowHandle, Win32.SW_SHOWNORMAL);
+                Win32.ShowWindow(YTChromeWindow.process.MainWindowHandle, Win32.SW_SHOWNORMAL);
+
+
+                //Thread.Sleep(100);
+                //var xx = Win32.IsWindowVisible(YTChromeWindow.process.MainWindowHandle);
+                //if (!Win32.IsWindowVisible(YTChromeWindow.process.MainWindowHandle))
+                //{
+                //    // should be!
+                //    YTChromeWindow = Chrome();
+                //}
             }
-        }
 
-        private static void FindYTM()
-        {
-            new Thread((x) =>
-            {
-                Thread.Sleep(250);
-                try
-                {
-                    if (windowHandle == IntPtr.Zero)
-                    {
-                        var result = Win32.FindWindowByTitle("YouTube Music");
-                        windowHandle = result.mainWindowHandle;
-                        windowProcess = result.process;
-                    }
-                }
-                catch (Exception e)
-                {
-                }
-            }).Start();
 
         }
 
-        private static void YT_SendKey(VirtualKeyCode key)
+        //private static void ShowYTM()
+        //{
+        //    new Thread((x) =>
+        //    {
+        //        try
+        //        {
+        //            if (windowProcess == null)
+        //            {
+        //                var result = Win32.FindWindowByTitle("YouTube Music", "msedge", "--app=https://music.youtube.com/");
+
+        //                if (result.process == null)
+        //                {
+
+        //                    StartYTMusicProcess();
+        //                    Thread.Sleep(250);
+        //                    result = Win32.FindWindowByTitle("YouTube Music", "msedge", "--app=https://music.youtube.com/");
+        //                }
+
+
+        //                windowHandle = result.mainWindowHandle;
+        //                windowProcess = result.process;
+
+
+
+
+        //            }
+        //        }
+        //        catch (Exception e)
+        //        {
+        //        }
+        //    }).Start();
+
+        //}
+
+        //private static void StartYTMusicProcess()
+        //{
+
+        //    // not found, try to find old process with this cmd and kill it. 
+        //    var process = Win32.FindProcessByCommandLineWMI("msedge", "--app=https://music.youtube.com/");
+        //    if (process != null)
+        //    {
+        //        try
+        //        {
+        //            process.Kill();
+        //        }
+        //        catch (Exception ex) { }
+
+        //    }
+
+
+        //    ProcessStartInfo startInfo = new ProcessStartInfo
+        //    {
+        //        FileName = @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        //        Arguments = "--app=https://music.youtube.com/",
+        //        //CreateNoWindow = true,        // Do not create a window for the process
+        //        UseShellExecute = true,      // Do not use the system shell to start the process
+        //                                     //RedirectStandardOutput = true, // Redirect standard output so it won't block
+        //                                     //RedirectStandardError = true   // Redirect standard error so it won't block
+        //    };
+
+        //    process = new Process
+        //    {
+        //        StartInfo = startInfo
+        //    };
+
+        //    process.Start(); // Start the process
+
+
+        //    windowHandle = 0;
+        //    while (windowHandle == 0)
+        //    {
+
+        //        Thread.Sleep(50);
+        //        try
+        //        {
+        //            var result = Win32.FindWindowByTitle("YouTube Music", "msedge", "--app=https://music.youtube.com/");
+        //            windowHandle = result.mainWindowHandle;
+        //            windowProcess = result.process;
+        //        }
+        //        catch (Exception ex)
+        //        {
+
+        //        }
+        //    }
+
+
+        //}
+
+        private static void YT_SendKey(string keys)
         {
-            new Thread((x) =>
+
+            if (driver != null)
             {
-                try
-                {
-                    var inputSimulator = new InputSimulator();
+                //var getstring = GetStaticFieldValue(typeof(Keys), "Space");
+                driver.FindElement(By.TagName("body")).SendKeys(keys);
+            }
 
+        }
 
-                    if (windowHandle == IntPtr.Zero)
-                    {
-                        var result = Win32.FindWindowByTitle("YouTube Music");
-                        windowHandle = result.mainWindowHandle;
-                        windowProcess = result.process;
-                    }
-
-                    if (windowHandle != IntPtr.Zero)
-                    {
-                        //SetWindowPos(windowHandle, IntPtr.Zero, -10000, -10000, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
-
-                        //ShowWindow(windowHandle, SW_SHOWNORMAL);
-
-                        //SetWindowPos(windowHandle, IntPtr.Zero, -10000, -10000, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
-
-
-                        Win32.SetForegroundWindow(windowHandle);
-
-                        //Win32.ShowWindow(windowHandle, Win32.SW_HIDE);
-                        // Bring the window to the foreground
-
-
-
-                        // Send keys to the active window
-                        //inputSimulator.Keyboard.TextEntry("Hello, World!");
-                        inputSimulator.Keyboard.KeyPress(key);
-
-                    }
-                }
-                catch (Exception e)
-                {
-
-                }
-
-            }).Start();
+        public static string GetStaticFieldValue(Type type, string propertyName)
+        {
+            FieldInfo field = type.GetField(propertyName, BindingFlags.Public | BindingFlags.Static);
+            if (field != null)
+            {
+                return (string)field.GetValue(null);
+            }
+            else
+            {
+                throw new ArgumentException($"Property '{propertyName}' not found in class '{type.Name}'.");
+            }
         }
 
 

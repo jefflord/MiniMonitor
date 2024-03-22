@@ -1,4 +1,30 @@
 "use strict";
+class Util {
+    static findATagByInnerText(text) {
+        const allATags = document.querySelectorAll("a");
+        for (let i = 0; i < allATags.length; i++) {
+            if (allATags[i].innerText.trim() === text.trim()) {
+                return allATags[i];
+            }
+        }
+        return null; // Not found
+    }
+    static clickATagByInnerText(text) {
+        const allATags = document.querySelectorAll("a");
+        for (let i = 0; i < allATags.length; i++) {
+            if (allATags[i].innerText.trim() === text.trim()) {
+                allATags[i].click();
+            }
+        }
+    }
+    static GetCurrentSong() {
+        let node = document.querySelector("#layout > ytmusic-player-bar > div.middle-controls.style-scope.ytmusic-player-bar > div.content-info-wrapper.style-scope.ytmusic-player-bar > yt-formatted-string");
+        if (node != null) {
+            return node.innerText;
+        }
+        return "";
+    }
+}
 class MyClass {
     static ytm = null;
     static external = window["external"];
@@ -14,6 +40,9 @@ class MyClass {
     static HandleMessage(data) {
         let me = this;
         let dataObject = JSON.parse(data);
+        if (dataObject.DataType === "MusicUpdate") {
+            this.trySetInnerText("playingSong", dataObject.Song);
+        }
         if (dataObject.DataType === "CalendarData") {
             me.lastCalendarData = dataObject;
             if (me.lastCalendarInterval) {
@@ -80,15 +109,16 @@ class MyClass {
         let me = this;
         me.external.sendMessage('Close');
     }
-    static StartYTM() {
+    static ToggleYTM() {
         let me = this;
-        if (me.ytm == null) {
-            me.ytm = window.open("https://music.youtube.com/");
-            me.external.sendMessage('FindYTM');
-        }
-        else {
-            me.external.sendMessage('ToggleYTM');
-        }
+        //if (me.ytm == null) {
+        //    //me.ytm = window.open("https://music.youtube.com/");
+        //    me.external.sendMessage('FindYTM');
+        //} else {
+        //    me.external.sendMessage('ToggleYTM');
+        //}
+        me.external.sendMessage('ToggleYTM');
+        //me.external.sendMessage('TestWebDriver');
         //me.external.sendMessage('SendTest');
     }
     static SendMessage(message) {
@@ -112,3 +142,4 @@ class MyClass {
         return "X";
     }
 }
+window["Util"] = Util;

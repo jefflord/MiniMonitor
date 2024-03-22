@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Drawing;
+using System.Management;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -11,6 +12,7 @@ namespace Helpers
         internal const int HWND_TOPMOST = -1;
         internal const int SW_HIDE = 0;
         internal const int SW_SHOWNORMAL = 1;
+        internal const int SW_SHOWMINIMIZED = 2;
         internal const int SW_SHOW = 5;
         internal const int SWP_NOSIZE = 0x0001;
         internal const int SWP_NOMOVE = 0x0002;
@@ -100,6 +102,11 @@ namespace Helpers
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool IsWindowVisible(IntPtr hWnd);
 
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool IsIconic(IntPtr hWnd);
+
+
         // Delegate for the hook callback
         internal delegate void WinEventDelegate(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime);
 
@@ -107,12 +114,39 @@ namespace Helpers
         private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
 
-        internal static (IntPtr mainWindowHandle, Process process) FindWindowByTitle(string title)
+        public static Process FindProcessByCommandLineWMI(string processName, string cmdLine)
+        {
+
+            if (!processName.EndsWith(".exe"))
+            {
+                processName += ".exe";
+            }
+            string query = string.Format("SELECT CommandLine, ProcessId FROM Win32_Process WHERE Name = '{0}'", processName);
+            ManagementObjectSearcher searcher = new ManagementObjectSearcher("root\\cimv2", query);
+
+            foreach (ManagementObject process in searcher.Get())
+            {
+                if (process["CommandLine"] != null)
+                {
+                    string commandLine = process["CommandLine"].ToString();
+
+                    if (commandLine.Contains(cmdLine, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return Process.GetProcessById((int)(uint)process["ProcessId"]);
+                    }
+                }
+
+            }
+
+            return null; // Modify to return the process if found
+        }
+
+        internal static (IntPtr mainWindowHandle, Process process) FindWindowByTitle(string title, string name, string cmdLine)
         {
             IntPtr hWnd = IntPtr.Zero;
             Process process = null;
 
-            for (var i = 0; i < 10; i++)
+            for (var i = 0; i < 1; i++)
             {
                 hWnd = FindWindow(null, title);
                 if (hWnd != IntPtr.Zero)
@@ -120,10 +154,21 @@ namespace Helpers
                     uint processId;
                     GetWindowThreadProcessId(hWnd, out processId);
                     process = Process.GetProcessById((int)processId);
+                    return (hWnd, process);
                 }
                 else
                 {
-                    foreach (Process pList in Process.GetProcesses())
+                    var processes = new Process[] { };
+                    if (name == null)
+                    {
+                        processes = Process.GetProcesses();
+                    }
+                    else
+                    {
+                        processes = Process.GetProcessesByName(name);
+                    }
+
+                    foreach (Process pList in processes)
                     {
                         IntPtr h = pList.MainWindowHandle;
                         process = pList;
@@ -135,21 +180,14 @@ namespace Helpers
                             Debug.WriteLine($"checking {windowText.ToString()}");
                             if (windowText.ToString().Contains(title, StringComparison.OrdinalIgnoreCase))
                             {
-                                hWnd = h;
-                                break;
+                                return (hWnd, process);
                             }
                         }
                     }
                 }
-
-                if (hWnd != IntPtr.Zero)
-                {
-                    return (hWnd, process);
-                }
-                Thread.Sleep(1000);
             }
 
-            return (hWnd, process);
+            return (IntPtr.Zero, null);
         }
     }
 }

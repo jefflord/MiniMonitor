@@ -1,6 +1,35 @@
 ﻿
 declare let luxon: any;
 
+class Util {
+    public static findATagByInnerText(text: string) {
+        const allATags = document.querySelectorAll("a");
+        for (let i = 0; i < allATags.length; i++) {
+            if (allATags[i].innerText.trim() === text.trim()) {
+                return allATags[i];
+            }
+        }
+        return null; // Not found
+    }
+
+    public static clickATagByInnerText(text: string) {
+        const allATags = document.querySelectorAll("a");
+        for (let i = 0; i < allATags.length; i++) {
+            if (allATags[i].innerText.trim() === text.trim()) {
+                allATags[i].click();
+            }
+        }
+    }
+
+    public static GetCurrentSong(): string {
+        let node = document.querySelector("#layout > ytmusic-player-bar > div.middle-controls.style-scope.ytmusic-player-bar > div.content-info-wrapper.style-scope.ytmusic-player-bar > yt-formatted-string") as HTMLDivElement;
+        if (node != null) {
+            return node.innerText;
+        }
+        return "";
+    }
+}
+
 class MyClass {
 
     static ytm: Window | null = null;
@@ -25,6 +54,10 @@ class MyClass {
         let dataObject = JSON.parse(data);
 
 
+        if (dataObject.DataType === "MusicUpdate") {
+            this.trySetInnerText("playingSong", dataObject.Song);
+        }
+
         if (dataObject.DataType === "CalendarData") {
 
 
@@ -36,13 +69,13 @@ class MyClass {
             }
 
             var updateCalData = function () {
-                
+
                 if (dataObject.HasEvents === false) {
                     MyClass.setStyleDisplay("nextMeeting", "none");
                     return;
                 }
 
-                
+
                 me.trySetInnerText("meetingTitle", dataObject.Summary);
                 let timeMessage = "";
                 let minutesUntil = (new Date(dataObject.StartTimeUtc as string).getTime() - new Date().getTime()) / 1000.0 / 60.0;
@@ -115,15 +148,18 @@ class MyClass {
         me.external.sendMessage('Close');
     }
 
-    public static StartYTM() {
+    public static ToggleYTM() {
         let me = this;
 
-        if (me.ytm == null) {
-            me.ytm = window.open("https://music.youtube.com/");
-            me.external.sendMessage('FindYTM');
-        } else {
-            me.external.sendMessage('ToggleYTM');
-        }
+        //if (me.ytm == null) {
+        //    //me.ytm = window.open("https://music.youtube.com/");
+        //    me.external.sendMessage('FindYTM');
+        //} else {
+        //    me.external.sendMessage('ToggleYTM');
+        //}
+        me.external.sendMessage('ToggleYTM');
+
+        //me.external.sendMessage('TestWebDriver');
 
 
         //me.external.sendMessage('SendTest');
@@ -157,3 +193,5 @@ class MyClass {
         return "X";
     }
 }
+
+window["Util"] = Util;
