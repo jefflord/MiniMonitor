@@ -513,7 +513,7 @@ namespace HelloPhotinoApp
             options.AddArguments(@"user-data-dir=C:\Users\jeff\AppData\Local\Google\Chrome\User Data");
 
             options.AddArguments(new List<string>() { $"--app=https://music.youtube.com/" });
-            options.AddExcludedArgument("enable-automation");
+            options.AddExcludedArgument("enable-automation");                        
             options.AddAdditionalOption("useAutomationExtension", false);
 
             driver = new ChromeDriver(options);

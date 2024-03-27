@@ -34,6 +34,7 @@ class MyClass {
 
     static ytm: Window | null = null;
     static external = window["external"] as any;
+    static lastSoundTime = new Date("2000/01/01");
 
     static trySetInnerText(id: string, text: string) {
 
@@ -47,6 +48,57 @@ class MyClass {
 
     static lastCalendarData = null;
     static lastCalendarInterval = 0;
+    static blinkIntervalRef = 0;
+    static lastBlinkInterval = 0;
+
+
+    public static BlinkText(elementId: string, blinkInterval: number) {
+        let me = this;
+        const element = document.getElementById(elementId) as HTMLHtmlElement;
+        let visible = true;
+
+        if (me.blinkIntervalRef) {
+            clearInterval(me.blinkIntervalRef);
+        }
+
+
+        me.blinkIntervalRef = setInterval(() => {
+            visible = !visible;
+
+
+            if (blinkInterval >= 2000) {
+                if (visible) {
+                    me.BlinkTextTimes(elementId, !visible, 4);
+                } else {
+                    me.BlinkTextTimes(elementId, visible, 4);
+                }
+                
+
+            } else {
+                // just toggle
+                element.style.opacity = visible ? "1" : "0";
+            }
+
+
+        }, blinkInterval);
+    }
+
+    public static BlinkTextTimes(elementId: string, visible: boolean, count: number) {
+        let me = this;
+        const element = document.getElementById(elementId) as HTMLHtmlElement;
+
+        visible = !visible;
+
+        element.style.opacity = visible ? "1" : "0";
+
+        if (count > 0) {
+            setTimeout(function () {
+                me.BlinkTextTimes(elementId, visible, count - 1);
+            }, 200);
+        }
+
+    }
+
 
     public static HandleMessage(data: string) {
         let me = this;
@@ -103,6 +155,47 @@ class MyClass {
                     document.getElementById("nextMeeting")?.classList.add("nextMeetingDueSoon");
                 }
 
+
+                let soundInterval = 0;
+                let blinkInterval = 0;
+                if (minutesUntil < 1) {
+                    blinkInterval = 500;
+                    soundInterval = 30;
+                } else if (minutesUntil < 2) {
+                    blinkInterval = 500;
+                    soundInterval = 30;
+                } else if (minutesUntil < 5) {
+                    blinkInterval = 1000;
+                    soundInterval = 60;
+                } else if (minutesUntil < 15) {
+                    blinkInterval = 2000;
+                    soundInterval = 60;
+                } else if (minutesUntil < 30) {
+                    blinkInterval = 3000;
+                } else if (minutesUntil < 60) {
+                    blinkInterval = 5000;
+                }
+
+                if (blinkInterval === 0) {
+                    clearInterval(me.blinkIntervalRef);
+                } else {
+                    if (me.lastBlinkInterval !== blinkInterval) {
+                        me.lastBlinkInterval = blinkInterval;
+                        me.BlinkText('nextMeeting', blinkInterval);
+                    }
+                }
+
+                debugger;
+                if (soundInterval > 0 && minutesUntil > 0) {
+                    // only if there is an interval AND the meeting is in the future.
+                    let timeDiffSeconds = (new Date().getTime() - me.lastSoundTime.getTime()) / 1000
+                    if (timeDiffSeconds > soundInterval) {
+                        me.lastSoundTime = new Date();
+                        const audioElement = new Audio('assets/mixkit-short-rooster-crowing-2470.wav');
+                        audioElement.play();
+                    }
+                }
+                
 
                 MyClass.setStyleDisplay("nextMeeting", "block");
             }

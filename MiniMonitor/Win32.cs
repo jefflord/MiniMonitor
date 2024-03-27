@@ -151,10 +151,20 @@ namespace Helpers
                 hWnd = FindWindow(null, title);
                 if (hWnd != IntPtr.Zero)
                 {
-                    uint processId;
-                    GetWindowThreadProcessId(hWnd, out processId);
-                    process = Process.GetProcessById((int)processId);
-                    return (hWnd, process);
+
+                    try
+                    {
+                        uint processId;
+                        GetWindowThreadProcessId(hWnd, out processId);
+                        process = Process.GetProcessById((int)processId);
+                        return (hWnd, process);
+                    }
+                    catch (Exception ex)
+                    {
+
+                        Console.WriteLine(ex.Message);
+                    }
+
                 }
                 else
                 {
