@@ -18,11 +18,18 @@ class Util {
         }
     }
     static GetCurrentSong() {
-        let node = document.querySelector("#layout > ytmusic-player-bar > div.middle-controls.style-scope.ytmusic-player-bar > div.content-info-wrapper.style-scope.ytmusic-player-bar > yt-formatted-string");
-        if (node != null) {
-            return node.innerText;
+        let result = { found: false };
+        let song = document.querySelector("#layout > ytmusic-player-bar > div.middle-controls.style-scope.ytmusic-player-bar > div.content-info-wrapper.style-scope.ytmusic-player-bar > yt-formatted-string");
+        if (song != null) {
+            let artist = document.querySelector("#layout > ytmusic-player-bar > div.middle-controls.style-scope.ytmusic-player-bar > div.content-info-wrapper.style-scope.ytmusic-player-bar > span > span.subtitle.style-scope.ytmusic-player-bar > yt-formatted-string > a:nth-child(1)");
+            result = {
+                found: true,
+                title: song.innerText,
+                artist: artist.innerText
+            };
         }
-        return "";
+        return JSON.stringify(result);
+        ;
     }
 }
 class MyClass {
@@ -78,7 +85,14 @@ class MyClass {
         let me = this;
         let dataObject = JSON.parse(data);
         if (dataObject.DataType === "MusicUpdate") {
-            this.trySetInnerText("playingSong", dataObject.Song);
+            if (dataObject.Success) {
+                this.trySetInnerText("playingSong", dataObject.Data.title);
+                this.trySetInnerText("playingArtist", dataObject.Data.artist);
+            }
+            else {
+                this.trySetInnerText("playingSong", "Nothing playing...");
+                this.trySetInnerText("playingArtist", "");
+            }
         }
         if (dataObject.DataType === "CalendarData") {
             me.lastCalendarData = dataObject;

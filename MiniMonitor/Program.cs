@@ -207,10 +207,10 @@ namespace HelloPhotinoApp
                         window.SendWebMessage(JsonSerializer.Serialize(data));
 
                         errorCount++;
-                        Log($"Error downloading file: {ex.Message}");                        
+                        Log($"Error downloading file: {ex.Message}");
                         waitOneGotSignal = AutoResetEventForCalendar.WaitOne(60000);
                     }
-                    
+
                 }
 
             }
@@ -814,21 +814,22 @@ namespace HelloPhotinoApp
                     {
                         try
                         {
-                            var song = GetCurrentSong();
-
                             var data = new
                             {
                                 DataType = "MusicUpdate",
-                                Song = song
+                                Success= true,
+                                Data = JsonDocument.Parse(GetCurrentSong())
                             };
                             window.SendWebMessage(JsonSerializer.Serialize(data));
                         }
                         catch (Exception e)
                         {
+                            Log(e.ToString());
                             var data = new
                             {
                                 DataType = "MusicUpdate",
-                                Song = e.Message
+                                Success = false,
+                                Error = e.Message
                             };
                             window.SendWebMessage(JsonSerializer.Serialize(data));
                         }

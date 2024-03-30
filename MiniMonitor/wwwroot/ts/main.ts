@@ -22,11 +22,20 @@ class Util {
     }
 
     public static GetCurrentSong(): string {
-        let node = document.querySelector("#layout > ytmusic-player-bar > div.middle-controls.style-scope.ytmusic-player-bar > div.content-info-wrapper.style-scope.ytmusic-player-bar > yt-formatted-string") as HTMLDivElement;
-        if (node != null) {
-            return node.innerText;
+
+        let result = { found: false } as any;
+        let song = document.querySelector("#layout > ytmusic-player-bar > div.middle-controls.style-scope.ytmusic-player-bar > div.content-info-wrapper.style-scope.ytmusic-player-bar > yt-formatted-string") as HTMLDivElement;
+        if (song != null) {
+
+
+            let artist = document.querySelector("#layout > ytmusic-player-bar > div.middle-controls.style-scope.ytmusic-player-bar > div.content-info-wrapper.style-scope.ytmusic-player-bar > span > span.subtitle.style-scope.ytmusic-player-bar > yt-formatted-string > a:nth-child(1)") as HTMLAnchorElement;
+            result = {
+                found: true,
+                title: song.innerText,
+                artist: artist.innerText
+            };            
         }
-        return "";
+        return JSON.stringify(result);;
     }
 }
 
@@ -72,7 +81,7 @@ class MyClass {
                 } else {
                     me.BlinkTextTimes(elementId, visible, 4);
                 }
-                
+
 
             } else {
                 // just toggle
@@ -107,7 +116,19 @@ class MyClass {
 
 
         if (dataObject.DataType === "MusicUpdate") {
-            this.trySetInnerText("playingSong", dataObject.Song);
+
+            if (dataObject.Success) {
+                this.trySetInnerText("playingSong", dataObject.Data.title);
+                this.trySetInnerText("playingArtist", dataObject.Data.artist);
+                
+            } else {
+                this.trySetInnerText("playingSong", "Nothing playing...");
+                this.trySetInnerText("playingArtist", "");
+                
+            }
+            
+
+            
         }
 
         if (dataObject.DataType === "CalendarData") {
@@ -186,7 +207,7 @@ class MyClass {
                     }
                 }
 
-                
+
                 if (soundIntervalMinutes > 0 && minutesUntil > 0) {
                     // only if there is an interval AND the meeting is in the future.
                     let timeDiffSeconds = (new Date().getTime() - me.lastSoundTime.getTime()) / 1000
@@ -196,7 +217,7 @@ class MyClass {
                         audioElement.play();
                     }
                 }
-                
+
 
                 MyClass.setStyleDisplay("nextMeeting", "block");
             }
@@ -220,7 +241,7 @@ class MyClass {
 
             if (value === "block") {
                 ele.style.opacity = "1";
-            }            
+            }
         }
     }
 

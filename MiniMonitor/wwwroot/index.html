@@ -78,7 +78,7 @@
                       
         }
 
-        #playingSong {
+        #playingSong, #playingArtist {
             text-align: right;
             _width: 200px;
             position: absolute;
@@ -89,7 +89,12 @@
             text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.8);
         }
 
-       
+        #playingArtist {
+            font-size: 1.0em;
+            top: 130px;
+        }
+
+
 
         #meetingTitle {
             position: absolute;
@@ -149,7 +154,10 @@
     <div id="playingSong">
         playingSong
     </div>
-    
+    <div id="playingArtist">
+        playingArtist
+    </div>
+
 
     <div id="nextMeeting" class="" onclick="MyClass.UpdateCalendar()">
         <span id="meetingTitle">Generate Lorem Ipsum placeholder text. Select the number of characters...</span>
