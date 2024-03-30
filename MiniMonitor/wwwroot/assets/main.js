@@ -114,44 +114,44 @@ class MyClass {
                 else if (minutesUntil <= 15) {
                     document.getElementById("nextMeeting")?.classList.add("nextMeetingDueSoon");
                 }
-                let soundInterval = 0;
-                let blinkInterval = 0;
+                let soundIntervalMinutes = 0;
+                let blinkIntervalMs = 0;
                 if (minutesUntil < 1) {
-                    blinkInterval = 500;
-                    soundInterval = 30;
+                    blinkIntervalMs = 500;
+                    soundIntervalMinutes = 60;
                 }
                 else if (minutesUntil < 2) {
-                    blinkInterval = 500;
-                    soundInterval = 30;
+                    blinkIntervalMs = 500;
+                    soundIntervalMinutes = 60;
                 }
                 else if (minutesUntil < 5) {
-                    blinkInterval = 1000;
-                    soundInterval = 60;
+                    blinkIntervalMs = 1000;
+                    soundIntervalMinutes = 120;
                 }
                 else if (minutesUntil < 15) {
-                    blinkInterval = 2000;
-                    soundInterval = 60;
+                    blinkIntervalMs = 2000;
+                    soundIntervalMinutes = 120;
                 }
                 else if (minutesUntil < 30) {
-                    blinkInterval = 3000;
+                    soundIntervalMinutes = 300;
+                    blinkIntervalMs = 3000;
                 }
                 else if (minutesUntil < 60) {
-                    blinkInterval = 5000;
+                    blinkIntervalMs = 5000;
                 }
-                if (blinkInterval === 0) {
+                if (blinkIntervalMs === 0) {
                     clearInterval(me.blinkIntervalRef);
                 }
                 else {
-                    if (me.lastBlinkInterval !== blinkInterval) {
-                        me.lastBlinkInterval = blinkInterval;
-                        me.BlinkText('nextMeeting', blinkInterval);
+                    if (me.lastBlinkInterval !== blinkIntervalMs) {
+                        me.lastBlinkInterval = blinkIntervalMs;
+                        me.BlinkText('nextMeeting', blinkIntervalMs);
                     }
                 }
-                debugger;
-                if (soundInterval > 0 && minutesUntil > 0) {
+                if (soundIntervalMinutes > 0 && minutesUntil > 0) {
                     // only if there is an interval AND the meeting is in the future.
                     let timeDiffSeconds = (new Date().getTime() - me.lastSoundTime.getTime()) / 1000;
-                    if (timeDiffSeconds > soundInterval) {
+                    if (timeDiffSeconds > soundIntervalMinutes) {
                         me.lastSoundTime = new Date();
                         const audioElement = new Audio('assets/mixkit-short-rooster-crowing-2470.wav');
                         audioElement.play();
@@ -170,6 +170,9 @@ class MyClass {
         let ele = document.getElementById(id);
         if (ele != null) {
             ele.style.display = value;
+            if (value === "block") {
+                ele.style.opacity = "1";
+            }
         }
     }
     static async UpdateSensorData() {

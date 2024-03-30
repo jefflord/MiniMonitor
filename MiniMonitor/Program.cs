@@ -128,7 +128,11 @@ namespace HelloPhotinoApp
 
                             var calendar = Calendar.Load(File.ReadAllText(localFilePath));
 
-                            occurrencesForToday.AddRange(calendar.GetOccurrences(DateTime.Now.AddMinutes(-10), DateTime.Now.AddDays(3)).Where(o => o.Period.StartTime.Date >= DateTime.Today).OrderBy(o => o.Period.StartTime).Take(6).ToList());
+                            var x = calendar.GetOccurrences(DateTime.Now.AddMinutes(-10), DateTime.Now.AddDays(3)).ToList();
+                            var y = x.Where(o => o.Period.StartTime.Date >= DateTime.Today && o.Period.StartTime.HasTime).ToList();
+                            var z = y.OrderBy(o => o.Period.StartTime).Take(6).ToList();
+
+                            occurrencesForToday.AddRange(z);
                         }
 
 
@@ -145,8 +149,6 @@ namespace HelloPhotinoApp
                                     // too old, skip
                                     continue;
                                 }
-
-                                data = new object { };
 
                                 data = new
                                 {
@@ -181,33 +183,62 @@ namespace HelloPhotinoApp
                             foreach (var ev in occurrencesForToday)
                             {
                                 var originalEvent = (CalendarEvent)ev.Source;
-                                Console.WriteLine($"Summary: {originalEvent.Summary}");
-                                Console.WriteLine($"Start Time: {ev.Period.StartTime}");
-                                Console.WriteLine($"End Time: {ev.Period.EndTime}");
-                                Console.WriteLine();
+                                Log($"Summary: {originalEvent.Summary}");
+                                Log($"Start Time: {ev.Period.StartTime}");
+                                Log($"End Time: {ev.Period.EndTime}");
+                                Log();
                             }
                         }
+
                         errorCount = 0;
                         waitOneGotSignal = AutoResetEventForCalendar.WaitOne(5 * 60 * 1000);
-
                     }
                     catch (Exception ex)
                     {
+                        var data = new
+                        {
+                            DataType = "CalendarData",
+                            HasEvents = true,
+                            Summary = ex.Message,
+                            StartTimeUtc = DateTime.UtcNow,
+                            WaitOneGotSignal = waitOneGotSignal
+                        };
+
+                        window.SendWebMessage(JsonSerializer.Serialize(data));
+
                         errorCount++;
-                        Console.WriteLine($"Error downloading file: {ex.Message}");
-                        Thread.Sleep(60000);
+                        Log($"Error downloading file: {ex.Message}");                        
+                        waitOneGotSignal = AutoResetEventForCalendar.WaitOne(60000);
                     }
+                    
                 }
 
             }
 
         }
 
+        private static void Log()
+        {
+            Console.WriteLine();
+        }
+
+        private static void Log(string message)
+        {
+            if (message == null)
+            {
+                return;
+            }
+
+
+            Console.WriteLine($"{DateTime.Now.ToString("O")}:{message.Trim()}\r\n");
+            File.AppendAllText("log.txt", $"{DateTime.Now.ToString("O")}:{message.Trim()}\r\n");
+        }
+
         private static void StartCalDataThread(PhotinoWindow window)
         {
             new Thread(async () =>
             {
-                Thread.Sleep(2000);
+                Thread.Sleep(5000);
                 await GetCalData(window);
 
             }).Start();
@@ -262,7 +293,7 @@ namespace HelloPhotinoApp
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex);
+                        Log(ex.ToString());
                         Thread.Sleep(1000);
                     }
 
@@ -362,7 +393,15 @@ namespace HelloPhotinoApp
 
                 if (driver != null)
                 {
-                    driver.Close();
+                    try
+                    {
+                        driver.Close();
+                    }
+                    catch (Exception e)
+                    {
+
+                    }
+
                 }
 
                 CleanupChrome();
@@ -513,7 +552,7 @@ namespace HelloPhotinoApp
             options.AddArguments(@"user-data-dir=C:\Users\jeff\AppData\Local\Google\Chrome\User Data");
 
             options.AddArguments(new List<string>() { $"--app=https://music.youtube.com/" });
-            options.AddExcludedArgument("enable-automation");                        
+            options.AddExcludedArgument("enable-automation");
             options.AddAdditionalOption("useAutomationExtension", false);
 
             driver = new ChromeDriver(options);
@@ -642,7 +681,7 @@ namespace HelloPhotinoApp
                 IntPtr monitor = Win32.MonitorFromWindow(mainWindowHandle, 0);
                 Win32.GetMonitorInfo(monitor, ref monitorInfo);
 
-                Console.WriteLine($"Current Screen: {monitorInfo.rcMonitor}");
+                Log($"Current Screen: {monitorInfo.rcMonitor}");
             }
             //Screen currentScreen = GetScreenFromPoint(Mouse.GetPosition(null));
 
