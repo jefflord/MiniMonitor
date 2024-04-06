@@ -25,15 +25,14 @@ class Util {
 
         let result = { found: false } as any;
         let song = document.querySelector("#layout > ytmusic-player-bar > div.middle-controls.style-scope.ytmusic-player-bar > div.content-info-wrapper.style-scope.ytmusic-player-bar > yt-formatted-string") as HTMLDivElement;
-        if (song != null) {
+        let artist = document.querySelector("#layout > ytmusic-player-bar > div.middle-controls.style-scope.ytmusic-player-bar > div.content-info-wrapper.style-scope.ytmusic-player-bar > span > span.subtitle.style-scope.ytmusic-player-bar > yt-formatted-string > a:nth-child(1)") as HTMLAnchorElement;
 
-
-            let artist = document.querySelector("#layout > ytmusic-player-bar > div.middle-controls.style-scope.ytmusic-player-bar > div.content-info-wrapper.style-scope.ytmusic-player-bar > span > span.subtitle.style-scope.ytmusic-player-bar > yt-formatted-string > a:nth-child(1)") as HTMLAnchorElement;
+        if (song != null && artist != null) {
             result = {
                 found: true,
                 title: song.innerText,
                 artist: artist.innerText
-            };            
+            };
         }
         return JSON.stringify(result);;
     }
@@ -117,18 +116,18 @@ class MyClass {
 
         if (dataObject.DataType === "MusicUpdate") {
 
-            if (dataObject.Success) {
+            if (dataObject.Success && dataObject.Data.found === true) {
                 this.trySetInnerText("playingSong", dataObject.Data.title);
                 this.trySetInnerText("playingArtist", dataObject.Data.artist);
-                
+
             } else {
                 this.trySetInnerText("playingSong", "Nothing playing...");
                 this.trySetInnerText("playingArtist", "");
-                
-            }
-            
 
-            
+            }
+
+
+
         }
 
         if (dataObject.DataType === "CalendarData") {
@@ -228,7 +227,10 @@ class MyClass {
 
         } else if (dataObject.DataType === "SensorData") {
             me.trySetInnerText("cpuData", Math.round(+dataObject.cpuTotal).toString());
+        } else if (dataObject.DataType === "WeatherData") {
+            me.trySetInnerText("tempDisplay", `, ${dataObject.Temperature}°`);            
         }
+
 
         //console.log(`data: ${data}!`)
     }

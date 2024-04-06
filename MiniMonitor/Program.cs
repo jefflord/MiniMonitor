@@ -22,6 +22,7 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using static System.Collections.Specialized.BitVector32;
 using System.Reflection;
+using MiniMonitor;
 
 namespace HelloPhotinoApp
 {
@@ -36,6 +37,8 @@ namespace HelloPhotinoApp
             public int x { get; set; }
             public int y { get; set; }
             public string[]? icsFiles { get; set; }
+            public string? openWeatherMapApi { get; set; }
+
         }
 
 
@@ -45,6 +48,8 @@ namespace HelloPhotinoApp
         static void Main(string[] args)
         {
 
+            //TestGetWeather();
+            //return;
 
             // Window title declared here for visibility
             string windowTitle = "MiniMonitor";
@@ -91,10 +96,14 @@ namespace HelloPhotinoApp
 
             StartChrome();
 
+            StartWeatherThread(window);
+
             StartSensorThread(window);
 
             window.WaitForClose(); // Starts the application event loop
         }
+
+
 
         private static int maxErrors = 10;
         private static int errorCount = 0;
@@ -242,6 +251,32 @@ namespace HelloPhotinoApp
                 await GetCalData(window);
 
             }).Start();
+
+        }
+
+        private static void StartWeatherThread(PhotinoWindow window)
+        {
+            var config = LoadConfig();
+            var api = config.openWeatherMapApi;
+            var wf = new WeatherFetcher(api);
+
+            ThreadPool.QueueUserWorkItem(async (x) =>
+            {
+
+                while (true)
+                {
+                    var weather = await wf.GetCurrentWeather("30157");
+
+                    var jsonString = JsonSerializer.Serialize(weather);
+
+                    window.SendWebMessage(jsonString);
+                    
+                    // 10 mintues
+                    Thread.Sleep(10 * 60 * 1000);
+                }
+            });
+
+
 
         }
 
@@ -729,7 +764,8 @@ namespace HelloPhotinoApp
         {
             if (File.Exists("config.json"))
             {
-                string jsonRead = File.ReadAllText("config.json");
+                var fileFullPath = Path.GetFullPath("config.json");
+                string jsonRead = File.ReadAllText(fileFullPath);
 
                 // Deserialize 
                 return JsonSerializer.Deserialize<Config>(jsonRead);
@@ -817,7 +853,7 @@ namespace HelloPhotinoApp
                             var data = new
                             {
                                 DataType = "MusicUpdate",
-                                Success= true,
+                                Success = true,
                                 Data = JsonDocument.Parse(GetCurrentSong())
                             };
                             window.SendWebMessage(JsonSerializer.Serialize(data));
