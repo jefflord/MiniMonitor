@@ -1,5 +1,6 @@
 "use strict";
 class Util {
+    static MutationObservers = [];
     static findATagByInnerText(text) {
         const allATags = document.querySelectorAll("a");
         for (let i = 0; i < allATags.length; i++) {
@@ -17,19 +18,112 @@ class Util {
             }
         }
     }
+    static async SendData(data) {
+        let image = document.querySelector("mini-monitor-img");
+        if (image) {
+            image.parentElement?.removeChild(image);
+        }
+        console.debug("SendData:", JSON.stringify(data, null, 5));
+        const url = 'http://127.0.0.1:9191/mini-monitor';
+        image = document.createElement("img");
+        image.style.display = "none";
+        image.src = url + `?data=${encodeURIComponent(JSON.stringify(data))}`;
+        image.classList.add("mini-monitor-img");
+        document.body.appendChild(image);
+    }
+    static GetMailboxInfo() {
+        let unread = 0;
+        let read = 0;
+        let latestUnread = null;
+        let parseTimeString = function (timeString) {
+            // Split the time string into hours, minutes, and AM/PM components
+            try {
+                if (timeString.indexOf("AM") >= 0 || timeString.indexOf("PM") >= 0 && (timeString.length === 7 || timeString.length === 8)) {
+                    timeString = timeString.replace(" ", ":");
+                    const [hours, minutes, meridian] = timeString.split(':').map(part => part.trim());
+                    // Convert hours to 24-hour format based on AM/PM
+                    const adjustedHours = meridian === 'PM' ? (parseInt(hours, 10) + 12) % 24 : +hours;
+                    // Create a Date object with provided time and set year, month, and day to 1
+                    let date = new Date();
+                    date.setHours(adjustedHours);
+                    date.setMinutes(+minutes);
+                    return date;
+                }
+            }
+            catch (ex) {
+            }
+            return null;
+        };
+        //
+        document.querySelectorAll(`div:not([attributeName="data-convid"]`).forEach(x => {
+            let label = x.getAttribute("aria-label");
+            if (label && label.startsWith("Unread")) {
+                unread++;
+                if (latestUnread === null) {
+                    latestUnread = {
+                        sender: x.querySelector(".mn28d.XG5Jd > div.JBWmn.gy2aJ.Ejrkd > span")?.innerHTML.trim(),
+                        subject: x.querySelector(".ovvvr > div> span")?.innerHTML.trim(),
+                        receivedOn: parseTimeString(x.querySelector(".WP8_u > div.lulAg > span")?.innerHTML.trim()),
+                    };
+                }
+            }
+            else {
+                read++;
+            }
+        });
+        return JSON.stringify({ unread: unread, read: read, latestUnread: latestUnread }, null, 5);
+    }
+    static GetMutationObserver(fn) {
+        let mo = new MutationObserver(fn);
+        Util.MutationObservers.push(mo);
+        return mo;
+    }
+    static WatchCurrentSong() {
+        let songTag = document.querySelector("#layout > ytmusic-player-bar > div.middle-controls.style-scope.ytmusic-player-bar > div.content-info-wrapper.style-scope.ytmusic-player-bar > yt-formatted-string");
+        if (songTag != null) {
+            let fn = function (ele) {
+                let result = { dataType: "GetCurrentSong", found: false };
+                let artist = ele.parentElement?.querySelector("span > span.subtitle.style-scope.ytmusic-player-bar > yt-formatted-string > a:nth-child(1)");
+                if (ele.innerText) {
+                    result.found = true;
+                    result.title = ele.innerText;
+                    result.artist = artist.innerText;
+                }
+                let data = {
+                    DataType: "MusicUpdate",
+                    Success: true,
+                    Data: result
+                };
+                Util.SendData(data);
+            };
+            if (!songTag.getAttribute("mini-mon-watched")) {
+                let options = {
+                    childList: false,
+                    subtree: false,
+                    attributes: true,
+                    characterData: true
+                };
+                let observer = Util.GetMutationObserver(function (mutations) {
+                    for (let mutation of mutations) {
+                        let changedElement = mutation.target;
+                        fn(changedElement);
+                    }
+                });
+                observer.observe(songTag, options);
+                songTag.setAttribute("mini-mon-watched", "true");
+            }
+        }
+    }
     static GetCurrentSong() {
-        let result = { found: false };
+        let result = { dataType: "GetCurrentSong", found: false };
         let song = document.querySelector("#layout > ytmusic-player-bar > div.middle-controls.style-scope.ytmusic-player-bar > div.content-info-wrapper.style-scope.ytmusic-player-bar > yt-formatted-string");
         let artist = document.querySelector("#layout > ytmusic-player-bar > div.middle-controls.style-scope.ytmusic-player-bar > div.content-info-wrapper.style-scope.ytmusic-player-bar > span > span.subtitle.style-scope.ytmusic-player-bar > yt-formatted-string > a:nth-child(1)");
         if (song != null && artist != null) {
-            result = {
-                found: true,
-                title: song.innerText,
-                artist: artist.innerText
-            };
+            result.found = true;
+            result.title = song.innerText;
+            result.artist = artist.innerText;
         }
         return JSON.stringify(result);
-        ;
     }
 }
 class MyClass {

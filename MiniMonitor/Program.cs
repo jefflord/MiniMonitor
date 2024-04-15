@@ -23,6 +23,13 @@ using OpenQA.Selenium.Chrome;
 using static System.Collections.Specialized.BitVector32;
 using System.Reflection;
 using MiniMonitor;
+using System.Net.Http;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Logging;
+
+
 
 namespace HelloPhotinoApp
 {
@@ -34,10 +41,15 @@ namespace HelloPhotinoApp
         static PhotinoWindow window;
         private class Config
         {
+
+
             public int x { get; set; }
             public int y { get; set; }
             public string[]? icsFiles { get; set; }
             public string? openWeatherMapApi { get; set; }
+
+            public string personalMailUserId { get; set; }
+            public string personalMailPassword { get; set; }
 
         }
 
@@ -92,6 +104,8 @@ namespace HelloPhotinoApp
                 .Load("wwwroot/index.html"); // Can be used with relative path strings or "new URI()" instance to load a website.
 
 
+            StartServer(window);
+
             StartCalDataThread(window);
 
             StartChrome();
@@ -128,6 +142,7 @@ namespace HelloPhotinoApp
 
                 while (true)
                 {
+
                     try
                     {
                         List<Occurrence> occurrencesForToday = new List<Occurrence>();
@@ -270,7 +285,7 @@ namespace HelloPhotinoApp
                     var jsonString = JsonSerializer.Serialize(weather);
 
                     window.SendWebMessage(jsonString);
-                    
+
                     // 10 mintues
                     Thread.Sleep(10 * 60 * 1000);
                 }
@@ -385,6 +400,9 @@ namespace HelloPhotinoApp
         //static IntPtr windowHandle = IntPtr.Zero;
         //static Process windowProcess = null;
         static (IntPtr mainWindowHandle, Process process) YTChromeWindow;
+
+        public static string yTwebDriverWindow { get; private set; }
+        public static string mailwebDriverWindow { get; private set; }
 
 
 
@@ -607,8 +625,7 @@ namespace HelloPhotinoApp
                 Thread.Sleep(100);
             }
 
-            var js = File.ReadAllText(Path.GetFullPath(@"wwwroot\assets\main.js"));
-            driver.ExecuteScript(js);
+
 
             return YTChromeWindow;
 
@@ -827,17 +844,46 @@ namespace HelloPhotinoApp
             Win32.SetWindowPos(mainWindowHandle, Win32.HWND_TOP, newX, newY, 0, 0, Win32.SWP_NOSIZE | Win32.SWP_NOZORDER);
         }
 
-        private static string GetCurrentSong()
-        {
-            var js = $"return Util.GetCurrentSong()";
-            var song = driver.ExecuteScript(js) as string;
-            return song;
-        }
 
         private static void StartChrome()
         {
 
             var result = Chrome();
+
+
+            driver.ExecuteScript(@"window.open(""https://outlook.live.com/mail"")");
+
+            while (yTwebDriverWindow == null || mailwebDriverWindow == null)
+            {
+                foreach (var handle in driver.WindowHandles)
+                {
+                    driver.SwitchTo().Window(handle);
+
+                    var js = File.ReadAllText(Path.GetFullPath(@"wwwroot\assets\main.js"));
+                    driver.ExecuteScript(js);
+
+                    var host = driver.ExecuteScript(@"return window.location.host");
+
+                    Thread.Sleep(100);
+
+                    if (host.Equals("music.youtube.com"))
+                    {
+                        yTwebDriverWindow = handle;
+                    }
+                    else if (host.Equals("www.microsoft.com") || host.Equals("outlook.live.com"))
+                    {
+                        mailwebDriverWindow = handle;
+                    }
+                    else
+                    {
+                        mailwebDriverWindow = null;
+                    }
+
+                    //Console.WriteLine($"{handle} - {host}");
+                }
+
+
+            }
 
 
             var t = new Thread(() =>
@@ -848,27 +894,12 @@ namespace HelloPhotinoApp
                     Thread.Sleep(1000);
                     if (driver != null)
                     {
-                        try
-                        {
-                            var data = new
-                            {
-                                DataType = "MusicUpdate",
-                                Success = true,
-                                Data = JsonDocument.Parse(GetCurrentSong())
-                            };
-                            window.SendWebMessage(JsonSerializer.Serialize(data));
-                        }
-                        catch (Exception e)
-                        {
-                            Log(e.ToString());
-                            var data = new
-                            {
-                                DataType = "MusicUpdate",
-                                Success = false,
-                                Error = e.Message
-                            };
-                            window.SendWebMessage(JsonSerializer.Serialize(data));
-                        }
+
+                        //GetMail();
+
+
+                        RunYtJs("WatchCurrentSong()");
+                        //GetCurrentSong();
                     }
                 }
 
@@ -877,6 +908,274 @@ namespace HelloPhotinoApp
 
             YTChromeWindow = result;
         }
+
+        private static object RunYtJs(string method)
+        {
+            try
+            {
+                lock (driver)
+                {
+                    var host = driver.ExecuteScript(@"return window.location.host");
+                    Console.WriteLine(host);
+
+                    if (driver.CurrentWindowHandle != yTwebDriverWindow)
+                    {
+                        driver.SwitchTo().Window(yTwebDriverWindow);
+                    }
+
+                    return driver.ExecuteScript($"return Util.{method}");
+                }
+            }
+            catch (Exception e)
+            {
+                Log(e.ToString());
+                return null;
+            }
+        }
+
+        private static void GetCurrentSong()
+        {
+            try
+            {
+                lock (driver)
+                {
+                    var host = driver.ExecuteScript(@"return window.location.host");
+                    Console.WriteLine(host);
+
+                    if (driver.CurrentWindowHandle != yTwebDriverWindow)
+                    {
+                        driver.SwitchTo().Window(yTwebDriverWindow);
+                    }
+
+                    var songInfo = driver.ExecuteScript($"return Util.GetCurrentSong()") as string;
+
+                    var data = new
+                    {
+                        DataType = "MusicUpdate",
+                        Success = true,
+                        Data = JsonDocument.Parse(songInfo)
+                    };
+                    window.SendWebMessage(JsonSerializer.Serialize(data));
+                }
+            }
+            catch (Exception e)
+            {
+                Log(e.ToString());
+                var data = new
+                {
+                    DataType = "MusicUpdate",
+                    Success = false,
+                    Error = e.Message
+                };
+                window.SendWebMessage(JsonSerializer.Serialize(data));
+            }
+        }
+
+
+
+        public static void StartServer(PhotinoWindow window)
+        {
+            new Thread(() =>
+            {
+                var builder = WebApplication.CreateBuilder(new string[] { });
+
+                builder.Logging.ClearProviders();
+                //builder.Logging.SetMinimumLevel(LogLevel.Debug);
+
+                builder.WebHost.ConfigureKestrel(options =>
+                {
+                    options.Listen(IPAddress.Loopback, 9191);
+                });
+                var app = builder.Build();
+
+
+                // endpoint need to send CORS headers for OPTIONS verb
+                app.MapMethods("/mini-monitor", new string[] { "OPTIONS" }, (HttpContext context) =>
+                {
+                    context.Response.Headers["Access-Control-Allow-Origin"] = "*";
+                    context.Response.Headers["Access-Control-Allow-Headers"] = "Content-Type,Accept,isajax";
+                    context.Response.Headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS";
+                    return Results.Ok();
+                });
+
+                app.MapGet("/mini-monitor", async (HttpContext context) =>
+                {
+                    context.Response.Headers["Access-Control-Allow"] = "*";
+                    context.Response.Headers["Access-Control-Allow-Origin"] = "*";
+                    window.SendWebMessage(context.Request.Query["data"]);
+                    return "";
+                });
+
+                app.Run();
+
+            })
+            { IsBackground = true }.Start();
+
+
+        }
+
+        private static void GetMail()
+        {
+            try
+            {
+
+
+
+                lock (driver)
+                {
+                    var config = LoadConfig();
+                    if (driver.CurrentWindowHandle != mailwebDriverWindow)
+                    {
+                        driver.SwitchTo().Window(mailwebDriverWindow);
+                    }
+
+                    var mailIcon = driver.ExecuteScript(@"return document.querySelector(`i[data-icon-name=""MailRegular""]`)");
+                    if (mailIcon == null)
+                    {
+                        var btn = driver.FindElement(By.CssSelector("#mectrl_headerPicture"));
+                        btn.Click();
+
+
+                        IWebElement input = null;
+
+                        input = GetByCss("input[name=\"loginfmt\"]");
+                        input.SendKeys(config.personalMailUserId);
+
+                        btn = GetByCss("button[type=\"submit\"]");
+                        btn.Click();
+
+                        btn = GetByCss("div[aria-label=\"Personal account\"] > div > button");
+                        btn.Click();
+
+                        input = GetByCss("input[name=\"passwd\"]");
+                        input.SendKeys(config.personalMailPassword);
+
+                        btn = GetByCss("button[type=\"submit\"]");
+                        btn.Click();
+
+                        btn = GetByCss("button[type=\"submit\"]");
+                        btn.Click();
+
+                        btn = GetByCss("button[type=\"submit\"]", 1000, true, "No");
+                        btn.Click();
+
+                    }
+
+                    driver.FindElement(By.CssSelector("body")).SendKeys("gi");
+
+
+                    var mailboxInfo = driver.ExecuteScript($"return Util.GetMailboxInfo()") as string;
+
+
+                    driver.ExecuteScript($"Util.TestDataPass()");
+
+
+
+
+
+                    var fullPath = Path.GetFullPath("mailboxInfo.json");
+
+
+
+                    File.WriteAllText("mailboxInfo.json", mailboxInfo);
+
+
+
+                    Console.WriteLine(mailboxInfo);
+
+
+                    // Unread GovHub Georgia Department of Revenue Payment Confirmation 6:24 AM No items selected
+
+
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        private static IWebElement GetByCss(string css)
+        {
+            return GetByCss(css, 5000, false, null);
+        }
+        private static IWebElement GetByCss(string css, int waitTimeMs, bool okToNotFind, string innerText)
+        {
+            Exception exception = null;
+
+            Exception timeoutException = new Exception($"Failed to find {css} in time.");
+
+            if (okToNotFind)
+            {
+                timeoutException = null;
+            }
+
+
+            foreach (var x in HasTimeLeft(waitTimeMs, 100, timeoutException))
+            {
+                try
+                {
+                    var element = driver.FindElement(By.CssSelector(css));
+
+                    if (innerText != null)
+                    {
+                        if (element.Text.Contains(innerText))
+                        {
+                            return element;
+                        }
+                    }
+                    else
+                    {
+                        return element;
+                    }
+
+
+
+                }
+                catch (NoSuchElementException e)
+                {
+                    exception = e;
+                }
+            }
+
+            if (okToNotFind)
+            {
+                return null;
+            }
+            else
+            {
+
+
+                if (exception != null)
+                {
+                    throw exception;
+                }
+                else
+                {
+                    throw new Exception("What?");
+                }
+            }
+
+        }
+
+        private static int HasTimeLeftCount = 0;
+        private static IEnumerable<bool> HasTimeLeft(int timeMs, int waitMs, Exception exception)
+        {
+            var timeout = DateTime.UtcNow.AddMilliseconds(timeMs);
+
+            while (DateTime.UtcNow < timeout)
+            {
+                HasTimeLeftCount++;
+                Thread.Sleep(waitMs);
+                yield return (DateTime.UtcNow < timeout);
+            }
+
+            if (exception != null)
+            {
+                throw exception;
+            }
+        }
+
         private static void ToggleYTM()
         {
 
