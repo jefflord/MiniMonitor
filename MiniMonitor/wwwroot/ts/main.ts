@@ -13,6 +13,41 @@ class Util {
         return null; // Not found
     }
 
+    static toggleAc() {
+        
+        const url = 'http://10.0.0.79:8222/json'; // Replace <ESP32-IP> with your ESP32's IP address
+
+        // JSON data to be sent in the request
+        const data = {
+            action: "hitSwitch",
+        };
+
+        console.log("start toggleAc");
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(jsonResponse => {
+                console.log("response toggleAc");
+                console.log('Response:', jsonResponse);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+
+
+
+    }
+
     public static clickATagByInnerText(text: string) {
         const allATags = document.querySelectorAll("a");
         for (let i = 0; i < allATags.length; i++) {
@@ -357,7 +392,7 @@ class MyClass {
                     let timeDiffSeconds = (new Date().getTime() - me.lastSoundTime.getTime()) / 1000
                     if (timeDiffSeconds > soundIntervalMinutes) {
                         me.lastSoundTime = new Date();
-                        const audioElement = new Audio('assets/mixkit-short-rooster-crowing-2470.wav');
+                        const audioElement = new Audio('assets/Alarm04.wav');
                         audioElement.play();
                     }
                 }

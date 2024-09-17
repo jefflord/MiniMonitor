@@ -20,6 +20,7 @@ using HidSharp.Utility;
 using OpenQA.Selenium.Edge;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Firefox;
 using static System.Collections.Specialized.BitVector32;
 using System.Reflection;
 using MiniMonitor;
@@ -37,7 +38,7 @@ namespace HelloPhotinoApp
     {
 
         static Process process = null;
-        static ChromeDriver driver = null;
+        static WebDriver driver = null;
         static PhotinoWindow window;
         private class Config
         {
@@ -103,16 +104,20 @@ namespace HelloPhotinoApp
                 })
                 .Load("wwwroot/index.html"); // Can be used with relative path strings or "new URI()" instance to load a website.
 
-
-            StartServer(window);
-
-            StartCalDataThread(window);
-
             StartChrome();
 
-            StartWeatherThread(window);
+            ThreadPool.QueueUserWorkItem((x) =>
+            {
+                Thread.Sleep(1);
+                StartServer(window);
 
-            StartSensorThread(window);
+                StartCalDataThread(window);
+
+                StartWeatherThread(window);
+
+                StartSensorThread(window);
+            }
+            );
 
             window.WaitForClose(); // Starts the application event loop
         }
@@ -280,14 +285,24 @@ namespace HelloPhotinoApp
 
                 while (true)
                 {
+                    Thread.Sleep(2000);
                     var weather = await wf.GetCurrentWeather("30157");
 
-                    var jsonString = JsonSerializer.Serialize(weather);
+                    if (weather != null)
+                    {
 
-                    window.SendWebMessage(jsonString);
+                        var jsonString = JsonSerializer.Serialize(weather);
 
-                    // 10 mintues
-                    Thread.Sleep(10 * 60 * 1000);
+                        window.SendWebMessage(jsonString);
+
+                        // 10 mintues
+                        Thread.Sleep(10 * 60 * 1000);
+                    }
+                    else
+                    {
+                        // try again in a minute
+                        Thread.Sleep(1 * 60 * 1000);
+                    }
                 }
             });
 
@@ -596,19 +611,33 @@ namespace HelloPhotinoApp
         {
             CleanupChrome();
 
-            var options = new ChromeOptions();
+
+
+            const bool useChrome = true;
+
+            if (useChrome)
+            {
+                var options = new ChromeOptions();
+                options.AddArguments(new List<string>() { "window-size=1920,1080" });
+                options.AddArguments(new List<string>() { "--disable-info" });
+
+                options.AddArguments(@"user-data-dir=C:\Users\jeff\AppData\Local\Google\Chrome\User Data");
+                //options.BinaryLocation = @"C:\Users\jeff\AppData\Local\Chromium\Application\chrome.exe";
+                options.AddArguments(new List<string>() { $"--app=https://music.youtube.com/" });
+                options.AddExcludedArgument("enable-automation");
+                options.AddAdditionalOption("useAutomationExtension", false);
+                driver = new ChromeDriver(options);
+            }
+            else
+            {
+                var options = new FirefoxOptions();
+                options.AddArguments(new List<string>() { $"https://music.youtube.com/" });
+                driver = new FirefoxDriver(options);
+            }
 
             // options.AddArguments(new List<string>() { "headless" });
-            options.AddArguments(new List<string>() { "window-size=1920,1080" });
-            options.AddArguments(new List<string>() { "--disable-info" });
 
-            options.AddArguments(@"user-data-dir=C:\Users\jeff\AppData\Local\Google\Chrome\User Data");
 
-            options.AddArguments(new List<string>() { $"--app=https://music.youtube.com/" });
-            options.AddExcludedArgument("enable-automation");
-            options.AddAdditionalOption("useAutomationExtension", false);
-
-            driver = new ChromeDriver(options);
             //Debugger.Launch();
             var chromedriverFindWindowByTitleResult = Win32.FindWindowByTitle("chromedriver.exe", "chromedriver", null);
             if (chromedriverFindWindowByTitleResult.process != null)
@@ -806,8 +835,7 @@ namespace HelloPhotinoApp
 
             int newX = currentX + 1;
             int newY = currentY;
-            Win32.
-                        SetWindowPos(mainWindowHandle, Win32.HWND_TOP, newX, newY, 0, 0, Win32.SWP_NOSIZE | Win32.SWP_NOZORDER);
+            Win32.SetWindowPos(mainWindowHandle, Win32.HWND_TOP, newX, newY, 0, 0, Win32.SWP_NOSIZE | Win32.SWP_NOZORDER);
             SaveWindowLocation(newX, newY);
         }
 
@@ -850,8 +878,16 @@ namespace HelloPhotinoApp
 
             var result = Chrome();
 
+            var startMail = false;
 
-            driver.ExecuteScript(@"window.open(""https://outlook.live.com/mail"")");
+            if (startMail)
+            {
+                driver.ExecuteScript(@"window.open(""https://outlook.live.com/mail"")");
+            }
+            else
+            {
+                mailwebDriverWindow = "NA";
+            }
 
             while (yTwebDriverWindow == null || mailwebDriverWindow == null)
             {
@@ -977,6 +1013,25 @@ namespace HelloPhotinoApp
         {
             new Thread(() =>
             {
+                var myId = Process.GetCurrentProcess().Id;
+                foreach (var process in Process.GetProcessesByName("MiniMonitor"))
+                {
+                    if (process.Id != myId)
+                    {
+                        try
+                        {
+                            process.CloseMainWindow();
+                        }
+                        catch (Exception e) { }
+                        try
+                        {
+                            process.Kill();
+                        }
+                        catch (Exception e) { }
+
+                    }
+                }
+
                 var builder = WebApplication.CreateBuilder(new string[] { });
 
                 builder.Logging.ClearProviders();
