@@ -169,6 +169,32 @@ class MyClass {
     static lastCalendarInterval = 0;
     static blinkIntervalRef = 0;
     static lastBlinkInterval = 0;
+    static ToggleDeskLight() {
+        $.ajax({
+            url: `http://reartvlight.local/doAction`,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ "action": "light_toggle" }),
+            success: function (jsonResponse) {
+                console.log(`done`, jsonResponse);
+            },
+            error: function (error) {
+                console.error('Error:', error);
+            }
+        });
+    }
+    static ToggleDisplayArea() {
+        let me = MyClass;
+        let displays = ["dvPrimary", "dvSecondary"];
+        if ($($(".dvPrimary")[0]).is(":visible")) {
+            $(".dvPrimary").hide();
+            $(".dvSecondary").show();
+        }
+        else {
+            $(".dvPrimary").show();
+            $(".dvSecondary").hide();
+        }
+    }
     static BlinkText(elementId, blinkInterval) {
         let me = this;
         const element = document.getElementById(elementId);

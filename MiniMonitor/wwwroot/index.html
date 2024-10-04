@@ -7,11 +7,30 @@
     <link rel="stylesheet" href="assets/main.css" />
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/3.4.4/luxon.min.js" integrity="sha512-dUlSLLkxslGILhPdCkALwk4szPhp3xmZIKFtlUD+O9Lslq41Aksmdt5OGqpomDoT4FsCUH70jQU8ezZHI3v1RQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
 
     <style>
+        body {
+            color: white; /* Set font color to white */
+        }
         /* Add some basic styling to the divs */
         .container {
             display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .left {
+            display: flex;
+            width: 80%;
+            gap: 10px; /* Adjust spacing between buttons */
+        }
+
+        .right {
+            display: flex;
+            padding-right: 20px;
+            justify-content: flex-end;
         }
 
         .left-div, .right-div {
@@ -76,12 +95,11 @@
 
         #nextMeeting {
             text-align: left;
-            left: 30px;            
+            left: 30px;
             font-size: 1.5em;
             color: white; /* Set font color to white */
             text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.8);
             overflow-y: auto; /* Enable vertical scrolling if content exceeds the max height */
-                      
         }
 
         #playingSong, #playingArtist {
@@ -140,35 +158,51 @@
         <source src="assets/bg-video-2.mp4" type="video/mp4">
     </video>
 
-    <div class="container" style="_display:none">
-        <button class="primary center" onclick="MyClass.ToggleYTM()">YT Music</button>
-        <button class="primary center" onclick="MyClass.SendMessage('LastSong')">|&lt;</button>
-        <button class="primary center" onclick="MyClass.PlayPause()">Play/Pause</button>
-        <button class="primary center" onclick="MyClass.SendMessage('NextSong')">&gt;|</button>
-        <button class="primary center" onclick="MyClass.Close()">Close</button>
+    <div class="container">
+        <div class="left">
+            <button class="dvPrimary primary center" onclick="MyClass.ToggleYTM()">YT Music</button>
+            <button class="dvPrimary primary center" onclick="MyClass.SendMessage('LastSong')">|&lt;</button>
+            <button class="dvPrimary primary center" onclick="MyClass.PlayPause()">Play/Pause</button>
+            <button class="dvPrimary primary center" onclick="MyClass.SendMessage('NextSong')">&gt;|</button>
+
+            <button class="dvSecondary primary center" onclick="Util.toggleAc()">AC</button>
+            <button class="dvSecondary primary center" onclick="MyClass.ToggleDeskLight()">Light</button>
+            <button class="dvSecondary primary center" onclick="MyClass.Close()">Close</button>
+
+        </div>
+        <div class="right">
+            <button class="menuBtn primary center" onclick="MyClass.ToggleDisplayArea()">...</button>
+        </div>
     </div>
 
-    <div style="text-align: center;">
+    <div class="dvPrimary" style="text-align: center;">
         <div>
             <span id="dateDisplay"></span>
-            <span id="tempDisplay" onclick="Util.toggleAc();"></span>
+            <span id="tempDisplay"></span>
         </div>
         <span id="clock"></span><span id="period"></span>
     </div>
 
+    <div class="dvSecondary" style="text-align: center;display:none">
+        <div>
+            ......
+        </div>
 
-    <div id="cpuData">
+    </div>
+
+
+    <div id="cpuData" class="dvPrimary">
         100
     </div>
-    <div id="playingSong">
+    <div id="playingSong" class="dvPrimary">
         playingSong
     </div>
-    <div id="playingArtist">
+    <div id="playingArtist" class="dvPrimary">
         playingArtist
     </div>
 
 
-    <div id="nextMeeting" class="" onclick="MyClass.UpdateCalendar()">
+    <div id="nextMeeting" class="dvPrimary" onclick="MyClass.UpdateCalendar()">
         <span id="meetingTitle">Generate Lorem Ipsum placeholder text. Select the number of characters...</span>
         <br />
         <span id="timeUntilMeeting">...</span>
@@ -196,6 +230,9 @@
 
     <script>
 
+
+        $(".dvSecondary").hide();
+
         function calculateTimeUntilMidnight(currentDate) {
             const midnight = new Date(currentDate);
             midnight.setHours(24, 0, 0, 0); // Set to midnight
@@ -215,9 +252,9 @@
 
             let formattedDate = `${dayOfWeek}, ${month} ${dayOfMonth}`;
 
-            
 
-            
+
+
             document.getElementById('dateDisplay').textContent = formattedDate;
 
             setTimeout(updateDate, calculateTimeUntilMidnight(new Date()));

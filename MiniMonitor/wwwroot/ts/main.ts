@@ -1,6 +1,7 @@
 ﻿
 declare let luxon: any;
 
+
 class Util {
     static MutationObservers = [] as MutationObserver[];
     public static findATagByInnerText(text: string) {
@@ -14,7 +15,7 @@ class Util {
     }
 
     static toggleAc() {
-        
+
         const url = 'http://10.0.0.79:8222/json'; // Replace <ESP32-IP> with your ESP32's IP address
 
         // JSON data to be sent in the request
@@ -239,6 +240,36 @@ class MyClass {
     static blinkIntervalRef = 0;
     static lastBlinkInterval = 0;
 
+
+    
+
+    public static ToggleDeskLight() {
+        $.ajax({
+            url: `http://reartvlight.local/doAction`,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ "action": "light_toggle" }),
+            success: function (jsonResponse) {
+                console.log(`done`, jsonResponse);
+            },
+            error: function (error) {
+                console.error('Error:', error);
+            }
+        });
+    }
+
+    public static ToggleDisplayArea() {
+        let me = MyClass;
+        let displays = ["dvPrimary", "dvSecondary"];
+
+        if ($($(".dvPrimary")[0]).is(":visible")) {
+            $(".dvPrimary").hide();
+            $(".dvSecondary").show();
+        } else {
+            $(".dvPrimary").show();
+            $(".dvSecondary").hide();
+        }
+    }
 
     public static BlinkText(elementId: string, blinkInterval: number) {
         let me = this;
