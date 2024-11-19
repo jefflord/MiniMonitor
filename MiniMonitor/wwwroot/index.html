@@ -77,21 +77,41 @@
 
         #cpuData {
             text-align: right;
-            _width: 200px;
             position: absolute;
-            left: 900px;
+            left: 770px;
             top: 200px;
             font-size: 1.5em;
             color: white; /* Set font color to white */
             text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.8);
         }
 
-            #cpuData::after {
-                font-size: 0.9em;
-                content: "%";
-                position: relative;
-                _left: -7px;
-            }
+        #spCpu::before {
+            font-size: 0.7em;
+            content: "CPU:";
+            position: relative;
+            _left: -7px;
+        }
+
+        #spCpu::after {
+            font-size: 0.7em;
+            content: "%";
+            position: relative;
+            _left: -7px;
+        }
+
+        #spGpu::before {
+            font-size: 0.8em;
+            content: "GPU:";
+            position: relative;
+            _left: -7px;
+        }
+
+        #spGpu::after {
+            font-size: 0.8em;
+            content: "%";
+            position: relative;
+            _left: -7px;
+        }
 
         #nextMeeting {
             text-align: left;
@@ -190,9 +210,8 @@
 
     </div>
 
-
     <div id="cpuData" class="dvPrimary">
-        100
+        <span id="spCpu">100</span>&nbsp;<span id="spGpu">100</span>
     </div>
     <div id="playingSong" class="dvPrimary">
         playingSong

@@ -399,11 +399,30 @@ namespace HelloPhotinoApp
 
             var cpuTotal = cpu.Sensors.FirstOrDefault(y => y.Name == "CPU Total");
 
+            //Debug.WriteLine("");
+
+            //foreach (var xxx in gpu.Sensors.Where(s => s.Name.Contains("GPU") && s.SensorType == SensorType.Load).ToList())
+            //{
+            //    Debug.WriteLine($"name {xxx.Name}, val: {xxx.Value}");
+            //}
+
+            //return JsonSerializer.Serialize(new
+            //{
+            //    DataType = "SensorData",
+            //    temp = 100,
+            //    gpuLoad = 100,
+            //    coreClock = gpu.Sensors.FirstOrDefault(s => s.Name == "GPU Core" && s.SensorType == SensorType.Clock).Value,
+            //    memClock = gpu.Sensors.FirstOrDefault(s => s.Name == "GPU Memory" && s.SensorType == SensorType.Clock).Value,
+            //    //fanPercent = gpu.Sensors.FirstOrDefault(s => s.Name == "GPU Fan" && s.SensorType == SensorType.Control).Value,
+            //    //fanRpm = gpu.Sensors.FirstOrDefault(s => s.Name == "GPU" && s.SensorType == SensorType.Fan).Value,
+            //    cpuTotal = 100
+            //});
+
             return JsonSerializer.Serialize(new
             {
                 DataType = "SensorData",
                 temp = gpu.Sensors.FirstOrDefault(s => s.Name == "GPU Core" && s.SensorType == SensorType.Temperature).Value,
-                load = gpu.Sensors.FirstOrDefault(s => s.Name == "GPU Core" && s.SensorType == SensorType.Load).Value,
+                gpuLoad = gpu.Sensors.FirstOrDefault(s => s.Name == "GPU Core" && s.SensorType == SensorType.Load).Value,
                 coreClock = gpu.Sensors.FirstOrDefault(s => s.Name == "GPU Core" && s.SensorType == SensorType.Clock).Value,
                 memClock = gpu.Sensors.FirstOrDefault(s => s.Name == "GPU Memory" && s.SensorType == SensorType.Clock).Value,
                 //fanPercent = gpu.Sensors.FirstOrDefault(s => s.Name == "GPU Fan" && s.SensorType == SensorType.Control).Value,
