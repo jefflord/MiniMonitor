@@ -9,10 +9,14 @@ namespace Helpers
     internal static class Win32
     {
 
+        internal const int SC_RESTORE = 0xF120; // Optional: To detect when it's shown again
+
+
         internal const int HWND_TOPMOST = -1;
         internal const int SW_HIDE = 0;
         internal const int SW_SHOWNORMAL = 1;
         internal const int SW_SHOWMINIMIZED = 2;
+        internal const int SW_RESTORE = 9;
         internal const int SW_SHOW = 5;
         internal const int SWP_NOSIZE = 0x0001;
         internal const int SWP_NOMOVE = 0x0002;
@@ -199,5 +203,43 @@ namespace Helpers
 
             return (IntPtr.Zero, null);
         }
+
+        #region P/Invoke Declarations
+
+
+        internal delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        internal static extern int GetWindowTextLength(IntPtr hWnd);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GetWindowPlacement(IntPtr hWnd, ref WINDOWPLACEMENT lpwndpl);
+
+        internal const int SW_SHOWMAXIMIZED = 3;
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct POINT
+        {
+            public int x;
+            public int y;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct WINDOWPLACEMENT
+        {
+            public int length;
+            public int flags;
+            public int showCmd;
+            public POINT ptMinPosition;
+            public POINT ptMaxPosition;
+            public RECT rcNormalPosition;
+        }
+
+        #endregion
     }
 }

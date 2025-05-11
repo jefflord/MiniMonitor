@@ -1,4 +1,4 @@
-﻿using PhotinoNET;
+﻿using Photino.NET;
 using System.Diagnostics;
 using System.Drawing;
 using System.Reflection.Metadata;
@@ -29,6 +29,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
+using static Helpers.Win32;
 
 
 
@@ -72,7 +73,9 @@ namespace HelloPhotinoApp
                 .SetTitle(windowTitle)
                 // Resize to a percentage of the main monitor work area
                 .SetUseOsDefaultSize(false)
-                .SetSize(new Size(1940, 490))
+                .SetUseOsDefaultLocation(false)
+                .SetSize(new Size(1920, 720))
+                //.SetLocation(new Point(500, 500))
                 // Center window in the middle of the screen
                 .Center()
                 .SetIconFile(Path.GetFullPath("wwwroot\\assets\\Monitor-Tablet-icon.ico"))
@@ -104,7 +107,9 @@ namespace HelloPhotinoApp
                 })
                 .Load("wwwroot/index.html"); // Can be used with relative path strings or "new URI()" instance to load a website.
 
-            StartChrome();
+
+
+            //StartChrome();
 
             ThreadPool.QueueUserWorkItem((x) =>
             {
@@ -116,6 +121,8 @@ namespace HelloPhotinoApp
                 StartWeatherThread(window);
 
                 StartSensorThread(window);
+
+                StayNormalThread(window);
             }
             );
 
@@ -310,6 +317,19 @@ namespace HelloPhotinoApp
 
         }
 
+        // 
+        private static void StayNormalThread(PhotinoWindow window)
+        {
+            Thread.Sleep(5000);
+            new Thread(() =>
+            {
+                while (true)
+                {
+                    StayNormal();
+                    Thread.Sleep(5000);
+                }
+            }).Start();
+        }
         private static void StartSensorThread(PhotinoWindow window)
         {
             new Thread(() =>
@@ -530,6 +550,12 @@ namespace HelloPhotinoApp
                 return;
             }
 
+            if (message == "SavePosition")
+            {
+                SavePosition();
+                return;
+            }
+
             if (message == "MoveUp")
             {
                 MoveUp();
@@ -642,6 +668,7 @@ namespace HelloPhotinoApp
 
                 options.AddArguments(@"user-data-dir=C:\Users\jeff\AppData\Local\Google\Chrome\User Data");
                 //options.BinaryLocation = @"C:\Users\jeff\AppData\Local\Chromium\Application\chrome.exe";
+                //options.BinaryLocation = @"C:\Users\jeff\AppData\Local\ms-playwright\chromium-1155\chrome-win\chrome.exe";
                 options.AddArguments(new List<string>() { $"--app=https://music.youtube.com/" });
                 options.AddExcludedArgument("enable-automation");
                 options.AddAdditionalOption("useAutomationExtension", false);
@@ -840,6 +867,91 @@ namespace HelloPhotinoApp
                 return new Config();
             }
 
+        }
+
+        static private int GetWindowState(IntPtr hWnd)
+        {
+            WINDOWPLACEMENT placement = new WINDOWPLACEMENT();
+            placement.length = Marshal.SizeOf(placement);
+            if (GetWindowPlacement(hWnd, ref placement))
+            {
+                return placement.showCmd;
+            }
+            return 0; // Error case
+        }
+
+        private static void StayNormal()
+        {
+            Process process = Process.GetCurrentProcess();
+            IntPtr mainWindowHandle = process.MainWindowHandle;
+
+
+            if (GetWindowState(mainWindowHandle) == SW_SHOWMINIMIZED)
+            {
+                ShowWindow(mainWindowHandle, Win32.SW_RESTORE);
+            }
+        }
+
+
+        private static void SavePosition()
+        {
+            Process process = Process.GetCurrentProcess();
+            IntPtr mainWindowHandle = process.MainWindowHandle;
+
+
+
+            // Check if the window is minimized
+            var xxx = GetWindowState(mainWindowHandle);
+
+            if (GetWindowState(mainWindowHandle) == SW_SHOWMINIMIZED)
+            {
+                ShowWindow(mainWindowHandle, Win32.SW_RESTORE);
+            }
+
+
+            //if (AreAllTopLevelWindowsHidden(mainWindowHandle))
+            //{
+            //    Console.WriteLine("ASDF");
+            //}
+
+            Win32.RECT windowRect;
+            Win32.GetWindowRect(mainWindowHandle, out windowRect);
+
+            int currentX = windowRect.Left;
+            int currentY = windowRect.Top;
+
+            int newX = currentX;
+            int newY = currentY;
+
+            SaveWindowLocation(newX, newY);
+        }
+
+        static private bool AreAllTopLevelWindowsHidden(IntPtr currentHandle)
+        {
+            System.Collections.ArrayList windowHandles = new System.Collections.ArrayList();
+            Win32.EnumWindows(new Win32.EnumWindowsProc(delegate (IntPtr hWnd, IntPtr lParam)
+            {
+                if (Win32.IsWindowVisible(hWnd) && Win32.GetWindowTextLength(hWnd) > 0)
+                {
+                    windowHandles.Add(hWnd);
+                }
+                return true;
+            }), IntPtr.Zero);
+
+            foreach (IntPtr hWnd in windowHandles)
+            {
+                if (hWnd != currentHandle && Win32.IsWindowVisible(hWnd))
+                {
+                    var placement = new Win32.WINDOWPLACEMENT();
+                    placement.length = Marshal.SizeOf(placement);
+                    Win32.GetWindowPlacement(hWnd, ref placement);
+                    if (placement.showCmd == Win32.SW_SHOWNORMAL || placement.showCmd == Win32.SW_SHOWMAXIMIZED)
+                    {
+                        return false; // Another top-level window is still visible
+                    }
+                }
+            }
+            return true; // All other top-level windows seem to be hidden/minimized
         }
 
         private static void MoveRight()

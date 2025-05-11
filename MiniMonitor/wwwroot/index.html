@@ -78,40 +78,56 @@
         #cpuData {
             text-align: right;
             position: absolute;
-            left: 770px;
+            left: 740px;
             top: 200px;
             font-size: 1.5em;
             color: white; /* Set font color to white */
             text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.8);
         }
 
-        #spCpu::before {
-            font-size: 0.7em;
-            content: "CPU:";
-            position: relative;
-            _left: -7px;
+        #spCpu, #spGpu {
+            font-family: "Courier New", Courier, monospace; /* Set fixed-width font */
         }
 
-        #spCpu::after {
-            font-size: 0.7em;
-            content: "%";
-            position: relative;
-            _left: -7px;
-        }
+            #spCpu::before {
+                font-size: 0.7em;
+                content: "CPU:";
+                position: relative;
+                _left: -7px;
+                font-family: 'Noto Sans KR', sans-serif;
+                font-size: 15px;
+                font-weight: normal;
+            }
 
-        #spGpu::before {
-            font-size: 0.8em;
-            content: "GPU:";
-            position: relative;
-            _left: -7px;
-        }
+            #spCpu::after {
+                font-size: 0.7em;
+                content: "%";
+                position: relative;
+                _left: -7px;
+                font-family: 'Noto Sans KR', sans-serif;
+                font-size: 15px;
+                font-weight: normal;
+            }
 
-        #spGpu::after {
-            font-size: 0.8em;
-            content: "%";
-            position: relative;
-            _left: -7px;
-        }
+            #spGpu::before {
+                font-size: 0.8em;
+                content: "GPU:";
+                position: relative;
+                _left: -7px;
+                font-family: 'Noto Sans KR', sans-serif;
+                font-size: 15px;
+                font-weight: normal;
+            }
+
+            #spGpu::after {
+                font-size: 0.8em;
+                content: "%";
+                position: relative;
+                _left: -7px;
+                font-family: 'Noto Sans KR', sans-serif;
+                font-size: 15px;
+                font-weight: normal;
+            }
 
         #nextMeeting {
             text-align: left;
@@ -178,11 +194,17 @@
         <source src="assets/bg-video-2.mp4" type="video/mp4">
     </video>
 
+
+    <div id="player" style="display:none"></div>
+
+
     <div class="container">
         <div class="left">
             <button class="dvPrimary primary center" onclick="MyClass.ToggleYTM()">YT Music</button>
             <button class="dvPrimary primary center" onclick="MyClass.SendMessage('LastSong')">|&lt;</button>
-            <button class="dvPrimary primary center" onclick="MyClass.PlayPause()">Play/Pause</button>
+            <!--<button class="dvPrimary primary center" onclick="MyClass.PlayPause()">Play/Pause</button>-->
+            <button class="dvPrimary primary center" onclick="testTogglePlay()">Play/Pause</button>
+
             <button class="dvPrimary primary center" onclick="MyClass.SendMessage('NextSong')">&gt;|</button>
 
             <button class="dvSecondary primary center" onclick="Util.toggleAc()">AC</button>
@@ -231,7 +253,8 @@
     <div class="container" style="display:none">
         <div class="left-div">
             <button class="primary center" onclick="MyClass.ToggleYTM()">Toggle YTM</button>
-            <button class="primary center" onclick="MyClass.PlayPause()">Play/Pause</button>
+            <!--<button class="primary center" onclick="MyClass.PlayPause()">Play/Pause</button>-->
+            <button class="primary center" onclick="testTogglePlay()">Play/Pause</button>
             <button class="primary center" onclick="MyClass.Close()">Close</button>
         </div>
 
@@ -249,7 +272,66 @@
 
     <script>
 
+        setTimeout(() => {
+            MyClass.SendMessage('SavePosition')
+        }, 5000);
 
+        /***********************/
+        // 2. This code loads the IFrame Player API code asynchronously.
+        var tag = document.createElement('script');
+
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // 3. This function creates an <iframe> (and YouTube player)
+        //    after the API code downloads.
+        var player;
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '195',
+                width: '320',
+                videoId: '7wG4DGqOxJw',
+                playerVars: {
+                    'playsinline': 1
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        // 4. The API will call this function when the video player is ready.
+        function onPlayerReady(event) {
+            //alert("player ready");
+            //event.target.playVideo();
+        }
+
+        // 5. The API calls this function when the player's state changes.
+        //    The function indicates that when playing a video (state=1),
+        //    the player should play for six seconds and then stop.
+        var done = false;
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING && !done) {
+                //setTimeout(stopVideo, 6000);
+                done = true;
+            }
+        }
+        function stopVideo() {
+            player.stopVideo();
+        }
+
+
+        function testTogglePlay() {
+            if (player.getPlayerState() === 2 || player.getPlayerState() === 5) {
+                player.playVideo();
+            } else {
+                player.pauseVideo();
+            }
+        }
+
+        /***********************/
         $(".dvSecondary").hide();
 
         function calculateTimeUntilMidnight(currentDate) {

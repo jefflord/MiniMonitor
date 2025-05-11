@@ -324,8 +324,10 @@ class MyClass {
             me.lastCalendarInterval = setInterval(updateCalData, 1000);
         }
         else if (dataObject.DataType === "SensorData") {
-            me.trySetInnerText("spCpu", Math.round(+dataObject.cpuTotal).toString().padStart(3, '0'));
-            me.trySetInnerText("spGpu", Math.round(+dataObject.gpuLoad).toString().padStart(3, '0'));
+            me.trySetInnerText("spCpu", (+dataObject.cpuTotal).toFixed(1).padStart(4, '0'));
+            //me.trySetInnerText("spCpu", Math.round(+dataObject.cpuTotal).toString().padStart(2, '0'));
+            me.trySetInnerText("spGpu", (+dataObject.gpuLoad).toFixed(1).padStart(4, '0'));
+            //me.trySetInnerText("spGpu", Math.round(+dataObject.gpuLoad).toString().padStart(2, '0'));
         }
         else if (dataObject.DataType === "WeatherData") {
             me.trySetInnerText("tempDisplay", `, ${dataObject.Temperature}°`);
