@@ -30,6 +30,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using static Helpers.Win32;
+using static HelloPhotinoApp.Program;
 
 
 
@@ -53,6 +54,16 @@ namespace HelloPhotinoApp
             public string personalMailUserId { get; set; }
             public string personalMailPassword { get; set; }
 
+        }
+
+        public class SensorData
+        {
+            public string DataType { get; set; }
+            public float? temp { get; set; }
+            public float? gpuLoad { get; set; }
+            public float? coreClock { get; set; }
+            public float? memClock { get; set; }
+            public float? cpuTotal { get; set; }
         }
 
 
@@ -105,7 +116,7 @@ namespace HelloPhotinoApp
                     HandleMessage(sender, message);
 
                 })
-                .Load("wwwroot/index.html"); // Can be used with relative path strings or "new URI()" instance to load a website.
+                .Load("wwwroot/index-b.html"); // Can be used with relative path strings or "new URI()" instance to load a website.
 
 
 
@@ -172,8 +183,6 @@ namespace HelloPhotinoApp
                         }
 
 
-
-                        object data;
                         if (occurrencesForToday.Count() > 0)
                         {
                             foreach (var ev in occurrencesForToday)
@@ -186,7 +195,7 @@ namespace HelloPhotinoApp
                                     continue;
                                 }
 
-                                data = new
+                                calendarData = new
                                 {
                                     DataType = "CalendarData",
                                     HasEvents = true,
@@ -195,19 +204,19 @@ namespace HelloPhotinoApp
                                     WaitOneGotSignal = waitOneGotSignal
                                 };
 
-                                window.SendWebMessage(JsonSerializer.Serialize(data));
+                                window.SendWebMessage(JsonSerializer.Serialize(calendarData));
 
                                 break;
                             }
                         }
                         else
                         {
-                            data = new
+                            calendarData = new
                             {
                                 DataType = "CalendarData",
                                 HasEvents = false
                             };
-                            window.SendWebMessage(JsonSerializer.Serialize(data));
+                            window.SendWebMessage(JsonSerializer.Serialize(calendarData));
                         }
 
 
@@ -293,12 +302,12 @@ namespace HelloPhotinoApp
                 while (true)
                 {
                     Thread.Sleep(2000);
-                    var weather = await wf.GetCurrentWeather("30157");
+                    weatherData = await wf.GetCurrentWeather("30157");
 
-                    if (weather != null)
+                    if (weatherData != null)
                     {
 
-                        var jsonString = JsonSerializer.Serialize(weather);
+                        var jsonString = JsonSerializer.Serialize(weatherData);
 
                         window.SendWebMessage(jsonString);
 
@@ -371,9 +380,8 @@ namespace HelloPhotinoApp
                 {
                     try
                     {
-                        var data = GetSensorData();
-
-                        window.SendWebMessage(data);
+                        sensorData = GetSensorData();
+                        window.SendWebMessage(sensorData);
                         Thread.Sleep(1000);
                     }
                     catch (Exception ex)
@@ -1188,9 +1196,43 @@ namespace HelloPhotinoApp
                 {
                     context.Response.Headers["Access-Control-Allow"] = "*";
                     context.Response.Headers["Access-Control-Allow-Origin"] = "*";
-                    window.SendWebMessage(context.Request.Query["data"]);
-                    return "";
+
+                    var action = context.Request.Query["action"];
+                    if (action == "sensorData")
+                    {
+                        
+
+
+                        if (string.IsNullOrEmpty(sensorData))
+                        {
+                            return ConvertJsonToString(new { NoData = true });
+                        }
+                        else
+                        {                            
+                            return ConvertJsonToString(new
+                            {
+                                sensorData = ParseSensorData(sensorData),
+                                calendarData = calendarData,
+                                weatherData = weatherData
+                            });
+
+                        }
+
+                    }
+                    else
+                    {
+                        window.SendWebMessage(context.Request.Query["data"]);
+                        return "";
+                    }
+
+
+
+
                 });
+
+
+
+
 
                 app.Run();
 
@@ -1345,6 +1387,10 @@ namespace HelloPhotinoApp
         }
 
         private static int HasTimeLeftCount = 0;
+        private static string sensorData;
+        private static object calendarData;
+        private static WeatherData weatherData;
+
         private static IEnumerable<bool> HasTimeLeft(int timeMs, int waitMs, Exception exception)
         {
             var timeout = DateTime.UtcNow.AddMilliseconds(timeMs);
@@ -1505,6 +1551,29 @@ namespace HelloPhotinoApp
             else
             {
                 throw new ArgumentException($"Property '{propertyName}' not found in class '{type.Name}'.");
+            }
+        }
+
+        private static string ConvertJsonToString(object jsonObject)
+        {
+            return JsonSerializer.Serialize(jsonObject);
+        }
+
+        private static SensorData ParseSensorData(string sensorData)
+        {
+            if (string.IsNullOrEmpty(sensorData))
+            {
+                return null;
+            }
+
+            try
+            {
+                return JsonSerializer.Deserialize<SensorData>(sensorData);
+            }
+            catch (JsonException ex)
+            {
+                Log($"Error parsing sensorData: {ex.Message}");
+                return null;
             }
         }
 

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=720">
+    <title>MiniMonitor Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/3.4.4/luxon.min.js" integrity="sha512-dUlSLLkxslGILhPdCkALwk4szPhp3xmZIKFtlUD+O9Lslq41Aksmdt5OGqpomDoT4FsCUH70jQU8ezZHI3v1RQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+
+    <script src="assets/main.js"></script>
+    <style>
+        body, html {
+            width: 1920px;
+            height: 720px;
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; /* Prevent scrolling */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr; /* Three columns */
+            grid-template-rows: auto 1fr auto; /* Header, content, footer */
+            gap: 20px;
+            padding: 20px;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        .grid-item {
+            background-color: #2c2c2c;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        /* Header: Clock/Date and Weather */
+        .header-left {
+            grid-column: 1 / 2; /* Was 1 / 2 */
+            grid-row: 1 / 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Remains good for meeting info */
+            align-items: flex-start; /* Remains good for meeting info */
+        }
+
+        .header-center { /* New style for the center header item */
+            grid-column: 2 / 3; /* Occupies the middle column */
+            grid-row: 1 / 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .header-right {
+            grid-column: 3 / 4; /* Was 3 / 4, remains the same but now there's a center */
+            grid-row: 1 / 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-end;
+            text-align: right;
+        }
+
+        .time-display {
+            font-size: 125px; /* Very large time */
+            font-weight: bold;
+            line-height: 1;
+            color: #4CAF50; /* Accent color */
+        }
+
+        .date-display {
+            font-size: 28px;
+            color: #b0b0b0;
+        }
+
+        .weather-display {
+            font-size: 32px;
+            display: flex; /* Align icon and text */
+            align-items: center; /* Vertically align icon and text */
+        }
+
+        .weather-icon {
+            width: 50px; /* Adjust size as needed */
+            height: 50px; /* Adjust size as needed */
+            margin-right: 10px; /* Space between icon and text */
+        }
+
+        /* Main Content Area */
+        .youtube-player {
+            grid-column: 1 / 2;
+            grid-row: 2 / 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around;
+        }
+
+        .youtube-info {
+            text-align: center;
+        }
+
+            .youtube-info .song-title {
+                font-size: 24px;
+                font-weight: bold;
+            }
+
+            .youtube-info .artist-name {
+                font-size: 18px;
+                color: #a0a0a0;
+            }
+
+        .youtube-controls button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 20px 40px; /* Doubled padding */
+            font-size: 36px; /* Doubled font size */
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+
+            .youtube-controls button:hover {
+                background-color: #45a049;
+            }
+
+        .meeting-info { /* This contains Time/Date now */
+            grid-column: 2 / 3;
+            grid-row: 2 / 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Center items vertically */
+            align-items: center;
+            text-align: center;
+        }
+
+        .toggle-button-container { /* New container for the button */
+            margin-bottom: 20px; /* Add some space below the button */
+        }
+
+            .toggle-button-container button {
+                background-color: #007bff; /* A different color for this button */
+                color: white;
+                border: none;
+                padding: 15px 30px;
+                font-size: 20px;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+
+                .toggle-button-container button:hover {
+                    background-color: #0056b3;
+                }
+
+        .meeting-title {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .meeting-time-relative {
+            font-size: 48px;
+            color: #FFC107; /* Accent color */
+        }
+
+        .meeting-details {
+            font-size: 18px;
+            color: #a0a0a0;
+        }
+
+        .system-monitor {
+            grid-column: 3 / 4;
+            grid-row: 2 / 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .monitor-item {
+            font-size: 36px; /* Base size, specific elements below are enlarged */
+            text-align: center;
+        }
+
+            .monitor-item .label {
+                font-size: 40px; /* Doubled font size */
+                color: #a0a0a0;
+                display: block;
+            }
+
+            .monitor-item .value {
+                font-weight: bold;
+                color: #2196F3; /* Accent color */
+                font-size: 72px; /* Doubled font size */
+            }
+
+        /* Footer (can be used for additional info or kept empty) */
+        .footer-item {
+            grid-column: 1 / 4; /* Span all columns */
+            grid-row: 3 / 4;
+            text-align: center;
+            font-size: 16px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header: Clock/Date and Weather -->
+        <div class="grid-item header-left"> <!-- This will now contain Meeting Info -->
+            <div class="meeting-title" id="meeting-title">Next Meeting: ...</div>
+            <div class="meeting-time-relative" id="meeting-time-relative">in ?? minutes</div>
+            <div class="meeting-details" id="meeting-details">2025-01-01 09:00 AM</div>
+        </div>
+        <div class="grid-item header-center"> <!-- New center header section -->
+            <div class="toggle-button-container">
+                <button onclick="MyClass.ToggleDeskLight()">Toggle Lights</button>
+            </div>
+        </div>
+        <div class="grid-item header-right">
+            <div class="weather-display">
+                <img src="assets/icons/sunny.png" alt="Weather Icon" class="weather-icon" id="weather-icon">
+                <span id="weather-text-temp">??</span>°F,&nbsp;<span id="weather-text-condition">Loading...</span>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="grid-item youtube-player">
+            <div class="youtube-info">
+                <div class="song-title" id="song-title">Song Title Placeholder</div>
+                <div class="artist-name" id="artist-name">Artist Name</div>
+            </div>
+            <div class="youtube-controls">
+                <button id="btn-yt-prev">Last</button>
+                <button id="btn-yt-playpause">Play</button>
+                <button id="btn-yt-next">Next</button>
+            </div>
+        </div>
+
+        <div class="grid-item meeting-info"> <!-- This will now contain Time/Date -->
+            <!-- The toggle button was here, it has been moved to header-center -->
+            <div class="time-display" id="time-display">10:35 PM</div>
+            <div class="date-display" id="date-display">Sunday, May 11</div>
+        </div>
+
+        <div class="grid-item system-monitor">
+            <div class="monitor-item">
+                <span class="label">CPU Usage</span>
+                <span class="value" id="cpu-usage">25%</span>
+            </div>
+            <div class="monitor-item">
+                <span class="label">GPU Usage</span>
+                <span class="value" id="gpu-usage">40%</span>
+            </div>
+        </div>
+        
+        <!-- Footer (Optional) -->
+        <div class="grid-item footer-item">
+            MiniMonitor Dashboard
+        </div>
+    </div>
+
+    <script>
+        // Basic clock and date update (can be expanded)
+        function updateTime() {
+            const now = new Date();
+            // Time: Very large
+            const timeOpts = { hour: 'numeric', minute: '2-digit', hour12: true }; // Ensure it's large and clear
+            document.getElementById('time-display').textContent = now.toLocaleTimeString('en-US', timeOpts).replace(/ AM| PM/, ''); // Remove AM/PM for cleaner large display if desired, or keep it.
+
+            // Date: "Sunday, May 11"
+            const dateOpts = { weekday: 'long', month: 'long', day: 'numeric' };
+            document.getElementById('date-display').textContent = now.toLocaleDateString('en-US', dateOpts);
+        }
+        // Update time every second
+        setInterval(updateTime, 1000);
+        // Initial call
+        updateTime();
+
+        // Placeholder for future JS to fetch and update dynamic data
+        // e.g., weather, YouTube, meeting, CPU/GPU
+        console.log("Dashboard initialized. Add JavaScript to fetch dynamic data for weather, YouTube, meetings, and system stats.");
+
+        // Example of how you might update weather (replace with actual API call)
+        function updateWeather() {
+            // Simulate fetching weather data
+            // In a real scenario, your API would return weather condition and temperature
+            const weatherConditions = [
+                { text: "68°F, Partly Cloudy", icon: "partly-cloudy.png" },
+                { text: "72°F, Sunny", icon: "sunny.png" },
+                { text: "55°F, Rainy", icon: "rainy.png" },
+                { text: "60°F, Cloudy", icon: "cloudy.png" }
+            ];
+            const randomCondition = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
+
+            setTimeout(() => {
+                document.getElementById('weather-text').textContent = randomCondition.text;
+                // Assuming icons are in 'assets/icons/' folder
+                document.getElementById('weather-icon').src = 'assets/icons/' + randomCondition.icon; 
+                document.getElementById('weather-icon').alt = randomCondition.text.split(', ')[1]; // e.g., "Partly Cloudy"
+            }, 5000); // Update after 5 seconds
+        }
+        // updateWeather(); // Call this when you have actual data fetching
+        // setInterval(updateWeather, 10000); // Example: update weather every 10 seconds
+
+        // Example of how you might update system monitor (replace with actual data source)
+        function updateSystemMonitor() {
+             // Simulate fetching system data
+            setTimeout(() => {
+                document.getElementById('cpu-usage').textContent = Math.floor(Math.random() * 100) + "%";
+                document.getElementById('gpu-usage').textContent = Math.floor(Math.random() * 100) + "%";
+            }, 3000); // Update every 3 seconds
+        }
+        // setInterval(updateSystemMonitor, 3000); // Call this when you have actual data fetching
+        // updateSystemMonitor();
+
+
+        // Placeholder functions for YouTube controls
+        document.getElementById('btn-yt-prev').addEventListener('click', () => console.log('YT Prev clicked'));
+        document.getElementById('btn-yt-playpause').addEventListener('click', () => console.log('YT Play/Pause clicked'));
+        document.getElementById('btn-yt-next').addEventListener('click', () => console.log('YT Next clicked'));
+
+        // Placeholder for meeting update
+        function updateMeetingInfo() {
+            // Simulate fetching meeting data
+            setTimeout(() => {
+                document.getElementById('meeting-title').textContent = "Next Meeting: Design Review";
+                document.getElementById('meeting-time-relative').textContent = "in 15 minutes";
+                document.getElementById('meeting-details').textContent = "Online - Link in calendar";
+            }, 10000); // Update after 10 seconds
+        }
+        // updateMeetingInfo(); // Call this when you have actual data fetching
+
+    </script>
+</body>
+</html>

@@ -159,6 +159,10 @@ class MyClass {
     static external = window["external"];
     static lastSoundTime = new Date("2000/01/01");
     static trySetInnerText(id, text) {
+        if (text === null || text === undefined) {
+            text = "";
+        }
+        ;
         let x = document.getElementById(id);
         if (x) {
             x.innerText = text;
@@ -343,6 +347,120 @@ class MyClass {
             }
         }
     }
+    static isPageB() {
+        return window.location.pathname.indexOf("index-b.html") >= 0;
+    }
+    static weather_conditions = [
+        { "code": 200, "short_name": "Thunderstorm", "description": "thunderstorm with light rain", "icon": "11d" },
+        { "code": 201, "short_name": "Thunderstorm", "description": "thunderstorm with rain", "icon": "11d" },
+        { "code": 202, "short_name": "Thunderstorm", "description": "thunderstorm with heavy rain", "icon": "11d" },
+        { "code": 210, "short_name": "Thunderstorm", "description": "light thunderstorm", "icon": "11d" },
+        { "code": 211, "short_name": "Thunderstorm", "description": "thunderstorm", "icon": "11d" },
+        { "code": 212, "short_name": "Thunderstorm", "description": "heavy thunderstorm", "icon": "11d" },
+        { "code": 221, "short_name": "Thunderstorm", "description": "ragged thunderstorm", "icon": "11d" },
+        { "code": 230, "short_name": "Thunderstorm", "description": "thunderstorm with light drizzle", "icon": "11d" },
+        { "code": 231, "short_name": "Thunderstorm", "description": "thunderstorm with drizzle", "icon": "11d" },
+        { "code": 232, "short_name": "Thunderstorm", "description": "thunderstorm with heavy drizzle", "icon": "11d" },
+        { "code": 300, "short_name": "Drizzle", "description": "light intensity drizzle", "icon": "09d" },
+        { "code": 301, "short_name": "Drizzle", "description": "drizzle", "icon": "09d" },
+        { "code": 302, "short_name": "Drizzle", "description": "heavy intensity drizzle", "icon": "09d" },
+        { "code": 310, "short_name": "Drizzle", "description": "light intensity drizzle rain", "icon": "09d" },
+        { "code": 311, "short_name": "Drizzle", "description": "drizzle rain", "icon": "09d" },
+        { "code": 312, "short_name": "Drizzle", "description": "heavy intensity drizzle rain", "icon": "09d" },
+        { "code": 313, "short_name": "Drizzle", "description": "shower rain and drizzle", "icon": "09d" },
+        { "code": 314, "short_name": "Drizzle", "description": "heavy shower rain and drizzle", "icon": "09d" },
+        { "code": 321, "short_name": "Drizzle", "description": "shower drizzle", "icon": "09d" },
+        { "code": 500, "short_name": "Rain", "description": "light rain", "icon": "10d" },
+        { "code": 501, "short_name": "Rain", "description": "moderate rain", "icon": "10d" },
+        { "code": 502, "short_name": "Rain", "description": "heavy intensity rain", "icon": "10d" },
+        { "code": 503, "short_name": "Rain", "description": "very heavy rain", "icon": "10d" },
+        { "code": 504, "short_name": "Rain", "description": "extreme rain", "icon": "10d" },
+        { "code": 511, "short_name": "Rain", "description": "freezing rain", "icon": "13d" },
+        { "code": 520, "short_name": "Rain", "description": "light intensity shower rain", "icon": "09d" },
+        { "code": 521, "short_name": "Rain", "description": "shower rain", "icon": "09d" },
+        { "code": 522, "short_name": "Rain", "description": "heavy intensity shower rain", "icon": "09d" },
+        { "code": 531, "short_name": "Rain", "description": "ragged shower rain", "icon": "09d" },
+        { "code": 600, "short_name": "Snow", "description": "light snow", "icon": "13d" },
+        { "code": 601, "short_name": "Snow", "description": "snow", "icon": "13d" },
+        { "code": 602, "short_name": "Snow", "description": "heavy snow", "icon": "13d" },
+        { "code": 611, "short_name": "Snow", "description": "sleet", "icon": "13d" },
+        { "code": 612, "short_name": "Snow", "description": "light shower sleet", "icon": "13d" },
+        { "code": 613, "short_name": "Snow", "description": "shower sleet", "icon": "13d" },
+        { "code": 615, "short_name": "Snow", "description": "light rain and snow", "icon": "13d" },
+        { "code": 616, "short_name": "Snow", "description": "rain and snow", "icon": "13d" },
+        { "code": 620, "short_name": "Snow", "description": "light shower snow", "icon": "13d" },
+        { "code": 621, "short_name": "Snow", "description": "shower snow", "icon": "13d" },
+        { "code": 622, "short_name": "Snow", "description": "heavy shower snow", "icon": "13d" },
+        { "code": 701, "short_name": "Mist", "description": "mist", "icon": "50d" },
+        { "code": 711, "short_name": "Smoke", "description": "smoke", "icon": "50d" },
+        { "code": 721, "short_name": "Haze", "description": "haze", "icon": "50d" },
+        { "code": 731, "short_name": "Dust", "description": "sand/dust whirls", "icon": "50d" },
+        { "code": 741, "short_name": "Fog", "description": "fog", "icon": "50d" },
+        { "code": 751, "short_name": "Sand", "description": "sand", "icon": "50d" },
+        { "code": 761, "short_name": "Dust", "description": "dust", "icon": "50d" },
+        { "code": 762, "short_name": "Ash", "description": "volcanic ash", "icon": "50d" },
+        { "code": 771, "short_name": "Squall", "description": "squalls", "icon": "50d" },
+        { "code": 781, "short_name": "Tornado", "description": "tornado", "icon": "50d" },
+        { "code": 801, "short_name": "Clouds", "description": "few clouds: 11-25%", "icon": "02d" },
+        { "code": 802, "short_name": "Clouds", "description": "scattered clouds: 25-50%", "icon": "03d" },
+        { "code": 803, "short_name": "Clouds", "description": "broken clouds: 51-84%", "icon": "04d" },
+        { "code": 804, "short_name": "Clouds", "description": "overcast clouds: 85-100%", "icon": "04d" },
+        { "code": 805, "short_name": "Clouds", "description": "overcast clouds", "icon": "04d" }
+    ];
+    static async UpdateSensorDataForB() {
+        let me = this;
+        try {
+            const response = await fetch('http://127.0.0.1:9191/mini-monitor/?action=sensorData');
+            const responseData = await response.json();
+            if (responseData.NoData !== true) {
+                const sensorData = responseData["sensorData"];
+                const calendarData = responseData["calendarData"];
+                const weatherData = responseData["weatherData"];
+                if (weatherData && weatherData.DataType === "WeatherData") {
+                    console.log("weatherData", weatherData);
+                    me.trySetInnerText("weather-text-temp", weatherData.Temperature);
+                    let weather_condition = me.weather_conditions.find((x) => x.description === weatherData.Description);
+                    if (weather_condition) {
+                        let iconUrl = `http://openweathermap.org/img/wn/${weather_condition.icon}@2x.png`;
+                        document.getElementById("weather-icon").src = iconUrl;
+                        me.trySetInnerText("weather-text-condition", weather_condition?.short_name);
+                    }
+                    //let relativeTimeFromNow = luxon.DateTime.fromISO(calendarData.StartTimeUtc).toRelative({ base: luxon.DateTime.now(), style: 'long' });
+                    //me.trySetInnerText("meeting-time-relative", relativeTimeFromNow);
+                    // 
+                    // meeting-title
+                    // 
+                    // Summary
+                    //HasEvents
+                }
+                if (calendarData && calendarData.DataType === "CalendarData" && calendarData.HasEvents) {
+                    me.trySetInnerText("meeting-title", calendarData.Summary);
+                    let relativeTimeFromNow = luxon.DateTime.fromISO(calendarData.StartTimeUtc).toRelative({ base: luxon.DateTime.now(), style: 'long' });
+                    me.trySetInnerText("meeting-time-relative", relativeTimeFromNow);
+                    me.trySetInnerText("meeting-details", luxon.DateTime.fromISO(calendarData.StartTimeUtc).toFormat('yyyy-MM-dd hh:mm a'));
+                    //
+                    // 
+                    // meeting-title
+                    // 
+                    // Summary
+                    //HasEvents
+                }
+                if (sensorData && sensorData.DataType === "SensorData") {
+                    document.getElementById("gpu-usage").innerText = `${sensorData.gpuLoad}%`;
+                    // cpu-usage
+                    document.getElementById("cpu-usage").innerText = `${Math.round(sensorData.cpuTotal)}%`;
+                }
+            }
+            setTimeout(async function () { await MyClass.UpdateSensorDataForB(); }, 1000);
+        }
+        catch (ex) {
+            console.error(ex);
+            setTimeout(async function () { await MyClass.UpdateSensorDataForB(); }, 1000);
+        }
+    }
+    static toProperCase(str) {
+        return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+    }
     static async UpdateSensorData() {
         let me = this;
         try {
@@ -394,3 +512,6 @@ class MyClass {
     }
 }
 window["Util"] = Util;
+if (MyClass.isPageB()) {
+    MyClass.UpdateSensorDataForB();
+}
