@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1920, height=720">
     <title>MiniMonitor Dashboard</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/3.4.4/luxon.min.js" integrity="sha512-dUlSLLkxslGILhPdCkALwk4szPhp3xmZIKFtlUD+O9Lslq41Aksmdt5OGqpomDoT4FsCUH70jQU8ezZHI3v1RQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/3.4.4/luxon.min.js"
+            integrity="sha512-dUlSLLkxslGILhPdCkALwk4szPhp3xmZIKFtlUD+O9Lslq41Aksmdt5OGqpomDoT4FsCUH70jQU8ezZHI3v1RQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
 
     <script src="assets/main.js"></script>
     <style>
-        body, html {
+        body,
+        html {
             width: 1920px;
             height: 720px;
             margin: 0;
@@ -17,15 +21,18 @@
             background-color: #1a1a1a;
             color: #e0e0e0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden; /* Prevent scrolling */
+            overflow: hidden;
+            /* Prevent scrolling */
             display: flex;
             flex-direction: column;
         }
 
         .container {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr; /* Three columns */
-            grid-template-rows: auto 1fr auto; /* Header, content, footer */
+            grid-template-columns: 1fr 1fr 1fr;
+            /* Three columns */
+            grid-template-rows: auto 1fr auto;
+            /* Header, content, footer */
             gap: 20px;
             padding: 20px;
             width: 100%;
@@ -37,21 +44,26 @@
             background-color: #2c2c2c;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
         /* Header: Clock/Date and Weather */
         .header-left {
-            grid-column: 1 / 2; /* Was 1 / 2 */
+            grid-column: 1 / 2;
+            /* Was 1 / 2 */
             grid-row: 1 / 2;
             display: flex;
             flex-direction: column;
-            justify-content: center; /* Remains good for meeting info */
-            align-items: flex-start; /* Remains good for meeting info */
+            justify-content: center;
+            /* Remains good for meeting info */
+            align-items: flex-start;
+            /* Remains good for meeting info */
         }
 
-        .header-center { /* New style for the center header item */
-            grid-column: 2 / 3; /* Occupies the middle column */
+        .header-center {
+            /* New style for the center header item */
+            grid-column: 2 / 3;
+            /* Occupies the middle column */
             grid-row: 1 / 2;
             display: flex;
             flex-direction: column;
@@ -61,7 +73,8 @@
         }
 
         .header-right {
-            grid-column: 3 / 4; /* Was 3 / 4, remains the same but now there's a center */
+            grid-column: 3 / 4;
+            /* Was 3 / 4, remains the same but now there's a center */
             grid-row: 1 / 2;
             display: flex;
             flex-direction: column;
@@ -71,10 +84,12 @@
         }
 
         .time-display {
-            font-size: 125px; /* Very large time */
+            font-size: 125px;
+            /* Very large time */
             font-weight: bold;
             line-height: 1;
-            color: #4CAF50; /* Accent color */
+            color: #4CAF50;
+            /* Accent color */
         }
 
         .date-display {
@@ -84,14 +99,19 @@
 
         .weather-display {
             font-size: 32px;
-            display: flex; /* Align icon and text */
-            align-items: center; /* Vertically align icon and text */
+            display: flex;
+            /* Align icon and text */
+            align-items: center;
+            /* Vertically align icon and text */
         }
 
         .weather-icon {
-            width: 50px; /* Adjust size as needed */
-            height: 50px; /* Adjust size as needed */
-            margin-right: 10px; /* Space between icon and text */
+            width: 50px;
+            /* Adjust size as needed */
+            height: 50px;
+            /* Adjust size as needed */
+            margin-right: 10px;
+            /* Space between icon and text */
         }
 
         /* Main Content Area */
@@ -118,37 +138,142 @@
                 color: #a0a0a0;
             }
 
-        .youtube-controls button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 20px 40px; /* Doubled padding */
-            font-size: 36px; /* Doubled font size */
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 0 10px;
+        .youtube-controls {
+            margin-bottom: 15px;
+            /* Add spacing between controls and playlist button */
         }
 
-            .youtube-controls button:hover {
-                background-color: #45a049;
+            .youtube-controls button {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                padding: 20px 40px;
+                /* Doubled padding */
+                font-size: 36px;
+                /* Doubled font size */
+                border-radius: 5px;
+                cursor: pointer;
+                margin: 0 10px;
             }
 
-        .meeting-info { /* This contains Time/Date now */
+                .youtube-controls button:hover {
+                    background-color: #45a049;
+                }
+
+        /* Playlist Selector Styles */
+        .playlist-button {
+            background-color: #ff5722;
+            /* Different color for playlist button */
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background-color 0.3s;
+        }
+
+            .playlist-button:hover {
+                background-color: #e64a19;
+            }
+
+        .playlist-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .playlist-modal-content {
+            background-color: #333;
+            padding: 25px;
+            border-radius: 10px;
+            max-width: 800px;
+            max-height: 600px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .playlist-modal-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            color: #ddd;
+            cursor: pointer;
+        }
+
+        .playlist-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .playlist-item {
+            background-color: #444;
+            border-radius: 5px;
+            padding: 15px;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+            .playlist-item:hover {
+                background-color: #555;
+                transform: translateY(-5px);
+            }
+
+        .playlist-thumbnail {
+            width: 100px;
+            height: 100px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            object-fit: cover;
+        }
+
+        .playlist-title {
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .playlist-description {
+            font-size: 12px;
+            color: #bbb;
+            text-align: center;
+        }
+
+        .meeting-info {
+            /* This contains Time/Date now */
             grid-column: 2 / 3;
             grid-row: 2 / 3;
             display: flex;
             flex-direction: column;
-            justify-content: center; /* Center items vertically */
+            justify-content: center;
+            /* Center items vertically */
             align-items: center;
             text-align: center;
         }
 
-        .toggle-button-container { /* New container for the button */
-            margin-bottom: 20px; /* Add some space below the button */
+        .toggle-button-container {
+            /* New container for the button */
+            margin-bottom: 20px;
+            /* Add some space below the button */
         }
 
             .toggle-button-container button {
-                background-color: #007bff; /* A different color for this button */
+                background-color: #007bff;
+                /* A different color for this button */
                 color: white;
                 border: none;
                 padding: 15px 30px;
@@ -168,7 +293,8 @@
 
         .meeting-time-relative {
             font-size: 48px;
-            color: #FFC107; /* Accent color */
+            color: #FFC107;
+            /* Accent color */
         }
 
         .meeting-details {
@@ -186,25 +312,30 @@
         }
 
         .monitor-item {
-            font-size: 36px; /* Base size, specific elements below are enlarged */
+            font-size: 36px;
+            /* Base size, specific elements below are enlarged */
             text-align: center;
         }
 
             .monitor-item .label {
-                font-size: 40px; /* Doubled font size */
+                font-size: 40px;
+                /* Doubled font size */
                 color: #a0a0a0;
                 display: block;
             }
 
             .monitor-item .value {
                 font-weight: bold;
-                color: #2196F3; /* Accent color */
-                font-size: 72px; /* Doubled font size */
+                color: #2196F3;
+                /* Accent color */
+                font-size: 72px;
+                /* Doubled font size */
             }
 
         /* Footer (can be used for additional info or kept empty) */
         .footer-item {
-            grid-column: 1 / 4; /* Span all columns */
+            grid-column: 1 / 4;
+            /* Span all columns */
             grid-row: 3 / 4;
             text-align: center;
             font-size: 16px;
@@ -212,15 +343,18 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <!-- Header: Clock/Date and Weather -->
-        <div class="grid-item header-left"> <!-- This will now contain Meeting Info -->
+        <div class="grid-item header-left">
+            <!-- This will now contain Meeting Info -->
             <div class="meeting-title" id="meeting-title">Next Meeting: ...</div>
             <div class="meeting-time-relative" id="meeting-time-relative">in ?? minutes</div>
             <div class="meeting-details" id="meeting-details">2025-01-01 09:00 AM</div>
         </div>
-        <div class="grid-item header-center"> <!-- New center header section -->
+        <div class="grid-item header-center">
+            <!-- New center header section -->
             <div class="toggle-button-container">
                 <button onclick="MyClass.ToggleDeskLight()">Toggle Lights</button>
             </div>
@@ -240,12 +374,15 @@
             </div>
             <div class="youtube-controls">
                 <button id="btn-yt-prev">Last</button>
-                <button id="btn-yt-playpause">Play</button>
+                <button id="btn-yt-playpause" onclick="testTogglePlay()">Play</button>
                 <button id="btn-yt-next">Next</button>
             </div>
+            <!-- New Playlist Button -->
+            <button class="playlist-button" id="show-playlists-btn">Choose Playlist</button>
         </div>
 
-        <div class="grid-item meeting-info"> <!-- This will now contain Time/Date -->
+        <div class="grid-item meeting-info">
+            <!-- This will now contain Time/Date -->
             <!-- The toggle button was here, it has been moved to header-center -->
             <div class="time-display" id="time-display">10:35 PM</div>
             <div class="date-display" id="date-display">Sunday, May 11</div>
@@ -261,10 +398,25 @@
                 <span class="value" id="gpu-usage">40%</span>
             </div>
         </div>
-        
+
         <!-- Footer (Optional) -->
         <div class="grid-item footer-item">
             MiniMonitor Dashboard
+        </div>
+
+        <div id="player" style="position:absolute; top:20px; right:20px; width:520px; height:295px;"></div>
+
+        <iframe style="position: absolute; top: 310px; right: 20px; width: 520px; height: 295px; " src="https://www.youtube.com/"></iframe>
+    </div>
+
+    <!-- Playlist Modal -->
+    <div class="playlist-modal" id="playlist-modal">
+        <div class="playlist-modal-content">
+            <div class="playlist-modal-close" id="close-playlist-modal">&times;</div>
+            <h2>Select a Playlist</h2>
+            <div class="playlist-list" id="playlist-list">
+                <!-- Playlist items will be populated here dynamically -->
+            </div>
         </div>
     </div>
 
@@ -304,7 +456,7 @@
             setTimeout(() => {
                 document.getElementById('weather-text').textContent = randomCondition.text;
                 // Assuming icons are in 'assets/icons/' folder
-                document.getElementById('weather-icon').src = 'assets/icons/' + randomCondition.icon; 
+                document.getElementById('weather-icon').src = 'assets/icons/' + randomCondition.icon;
                 document.getElementById('weather-icon').alt = randomCondition.text.split(', ')[1]; // e.g., "Partly Cloudy"
             }, 5000); // Update after 5 seconds
         }
@@ -313,7 +465,7 @@
 
         // Example of how you might update system monitor (replace with actual data source)
         function updateSystemMonitor() {
-             // Simulate fetching system data
+            // Simulate fetching system data
             setTimeout(() => {
                 document.getElementById('cpu-usage').textContent = Math.floor(Math.random() * 100) + "%";
                 document.getElementById('gpu-usage').textContent = Math.floor(Math.random() * 100) + "%";
@@ -340,5 +492,184 @@
         // updateMeetingInfo(); // Call this when you have actual data fetching
 
     </script>
+
+    <script>
+
+        /***********************/
+        // 2. This code loads the IFrame Player API code asynchronously.
+        var tag = document.createElement('script');
+
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // 3. This function creates an <iframe> (and YouTube player)
+        //    after the API code downloads.
+        var player;
+        var playerReady = false;
+        function onYouTubeIframeAPIReady() {
+            debugger;
+            player = new YT.Player('player', {
+                height: '195',
+                width: '320',
+                _videoId: '7wG4DGqOxJw',
+                _videoId: 'KNolprFjfww',
+                videoId: 'ze3wQ_z1Bv4',
+                playerVars: {
+                    'playsinline': 1
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        // 4. The API will call this function when the video player is ready.
+        function onPlayerReady(event) {
+
+            playerReady = true;
+            event.target.playVideo();
+            //alert("onPlayerReady");
+        }
+
+        // 5. The API calls this function when the player's state changes.
+        //    The function indicates that when playing a video (state=1),
+        //    the player should play for six seconds and then stop.
+        var done = false;
+        function onPlayerStateChange(event) {
+
+            if (event.data == YT.PlayerState.PLAYING && !done) {
+                //setTimeout(stopVideo, 6000);
+                done = true;
+            }
+        }
+        function stopVideo() {
+            player.stopVideo();
+        }
+
+
+        function testTogglePlay() {
+            if (!playerReady) {
+                alert("!playerReady")
+                return;
+            }
+            if (player.getPlayerState() === 2 || player.getPlayerState() === 5) {
+                player.playVideo();
+            } else {
+                player.pauseVideo();
+            }
+        }
+
+        // Playlist Selection functionality
+        document.addEventListener('DOMContentLoaded', function () {
+            const playlistButton = document.getElementById('show-playlists-btn');
+            const playlistModal = document.getElementById('playlist-modal');
+            const closePlaylistModal = document.getElementById('close-playlist-modal');
+            const playlistList = document.getElementById('playlist-list');
+
+            // Show playlist modal when button is clicked
+            playlistButton.addEventListener('click', async function () {
+                // Clear previous list
+                playlistList.innerHTML = '';
+
+                try {
+                    // Get playlists
+                    const playlists = await MyClass.getPlaylists();
+
+                    // Populate the playlist list
+                    playlists.forEach(playlist => {
+                        const playlistItem = document.createElement('div');
+                        playlistItem.className = 'playlist-item';
+                        playlistItem.dataset.playlistId = playlist.playlistId;
+
+                        // Use the first thumbnail
+                        const thumbnail = playlist.thumbnails && playlist.thumbnails.length > 0
+                            ? playlist.thumbnails[0]
+                            : { url: 'assets/icons/music-placeholder.png' };
+
+                        playlistItem.innerHTML = `
+                                    <img src="${thumbnail.url}" alt="${playlist.title}" class="playlist-thumbnail">
+                                    <div class="playlist-title">${playlist.title}</div>
+                                    <div class="playlist-description">${playlist.description || ''}</div>
+                                `;
+
+                        // Add click handler to select this playlist
+                        playlistItem.addEventListener('click', function () {
+                            selectPlaylist(playlist.playlistId, playlist.title);
+                            playlistModal.style.display = 'none';
+                        });
+
+                        playlistList.appendChild(playlistItem);
+                    });
+
+                    // Show the modal
+                    playlistModal.style.display = 'flex';
+                } catch (error) {
+                    console.error('Error loading playlists:', error);
+                    alert('Could not load playlists. Please try again later.');
+                }
+            });
+
+            // Close the modal when 'X' is clicked
+            closePlaylistModal.addEventListener('click', function () {
+                playlistModal.style.display = 'none';
+            });
+
+            // Also close modal if user clicks outside the content
+            window.addEventListener('click', function (event) {
+                if (event.target === playlistModal) {
+                    playlistModal.style.display = 'none';
+                }
+            });
+        });
+
+        // Function to handle playlist selection
+        async function selectPlaylist(playlistId, playlistTitle) {
+
+            debugger;
+            console.log(`Selected playlist: ${playlistTitle} (${playlistId})`);
+            // Update the UI to show which playlist is selected
+            document.getElementById('song-title').textContent = `Playlist: ${playlistTitle}`;
+            document.getElementById('artist-name').textContent = 'Loading...';
+
+            let playlist = await MyClass.getPlaylistTracks(playlistId)
+            let tracks = playlist["tracks"];
+
+
+            // Here you would implement the logic to load and play the selected playlist
+            // This would typically involve using the YouTube API to load the playlist
+            // and start playing it
+
+
+            // player.loadVideoById({
+            //     videoId: tracks[0]["videoId"], // Replace with the ID of the video you want to play
+            //     startSeconds: 0,        // (Optional) Start time in seconds
+            // });
+
+
+
+            //player.playVideo();
+
+
+            player = new YT.Player('player', {
+                height: '195',
+                width: '320',
+                videoId: tracks[0]["videoId"],
+                playerVars: {
+                    'playsinline': 1
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+
+        }
+
+
+
+    </script>
 </body>
+
 </html>

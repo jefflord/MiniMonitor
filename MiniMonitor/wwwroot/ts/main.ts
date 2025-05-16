@@ -1,6 +1,6 @@
 ﻿
 declare let luxon: any;
-
+declare let YT: any;
 
 class Util {
     static MutationObservers = [] as MutationObserver[];
@@ -526,7 +526,7 @@ class MyClass {
             { "code": 801, "short_name": "Clouds", "description": "few clouds: 11-25%", "icon": "02d" },
             { "code": 802, "short_name": "Clouds", "description": "scattered clouds: 25-50%", "icon": "03d" },
             { "code": 803, "short_name": "Clouds", "description": "broken clouds: 51-84%", "icon": "04d" },
-            { "code": 804, "short_name": "Clouds", "description": "overcast clouds: 85-100%", "icon": "04d" }
+            { "code": 804, "short_name": "Clouds", "description": "overcast clouds: 85-100%", "icon": "04d" },
             { "code": 805, "short_name": "Clouds", "description": "overcast clouds", "icon": "04d" }
         ];
 
@@ -552,7 +552,7 @@ class MyClass {
 
                 if (weatherData && weatherData.DataType === "WeatherData") {
 
-                    console.log("weatherData", weatherData)
+                    //console.log("weatherData", weatherData)
                     me.trySetInnerText("weather-text-temp", weatherData.Temperature);
 
 
@@ -611,6 +611,35 @@ class MyClass {
         }
     }
 
+    public static async getPlaylists(): Promise<any[] | null> {
+        try {
+            const response: Response = await fetch('http://localhost:8000/getPlaylists');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const playlists = await response.json();
+            return playlists;
+        } catch (error) {
+            console.error('Error fetching playlists:', error);
+            return null;
+        }
+    }
+
+
+    public static async getPlaylistTracks(playlistId: string): Promise<any[] | null> {
+        try {
+            const url = `http://localhost:8000/getPlaylistTracks?playlistId=${encodeURIComponent(playlistId)}`;
+            const response: Response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const tracks = await response.json();
+            return tracks;
+        } catch (error) {
+            console.error('Error fetching playlist tracks:', error);
+            return null;
+        }
+    }
 
     private static toProperCase(str: string): string {
         return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
@@ -671,7 +700,6 @@ class MyClass {
         me.external.sendMessage("UpdateCalendar");
     }
 
-
     public static PlayPause() {
         let me = this;
 
@@ -683,10 +711,19 @@ class MyClass {
         alert("doX1");
         return "X";
     }
+
 }
 
 (window as any)["Util"] = Util;
 
+//var myYTMHelper = new YTMHelper();
+
+//function onYouTubeIframeAPIReady() {
+//    myYTMHelper.onYouTubeIframeAPIReady();
+//}
+
 if (MyClass.isPageB()) {
     MyClass.UpdateSensorDataForB();
+
+
 }

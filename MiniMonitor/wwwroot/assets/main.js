@@ -417,7 +417,7 @@ class MyClass {
                 const calendarData = responseData["calendarData"];
                 const weatherData = responseData["weatherData"];
                 if (weatherData && weatherData.DataType === "WeatherData") {
-                    console.log("weatherData", weatherData);
+                    //console.log("weatherData", weatherData)
                     me.trySetInnerText("weather-text-temp", weatherData.Temperature);
                     let weather_condition = me.weather_conditions.find((x) => x.description === weatherData.Description);
                     if (weather_condition) {
@@ -456,6 +456,35 @@ class MyClass {
         catch (ex) {
             console.error(ex);
             setTimeout(async function () { await MyClass.UpdateSensorDataForB(); }, 1000);
+        }
+    }
+    static async getPlaylists() {
+        try {
+            const response = await fetch('http://localhost:8000/getPlaylists');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const playlists = await response.json();
+            return playlists;
+        }
+        catch (error) {
+            console.error('Error fetching playlists:', error);
+            return null;
+        }
+    }
+    static async getPlaylistTracks(playlistId) {
+        try {
+            const url = `http://localhost:8000/getPlaylistTracks?playlistId=${encodeURIComponent(playlistId)}`;
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const tracks = await response.json();
+            return tracks;
+        }
+        catch (error) {
+            console.error('Error fetching playlist tracks:', error);
+            return null;
         }
     }
     static toProperCase(str) {
@@ -512,6 +541,10 @@ class MyClass {
     }
 }
 window["Util"] = Util;
+//var myYTMHelper = new YTMHelper();
+//function onYouTubeIframeAPIReady() {
+//    myYTMHelper.onYouTubeIframeAPIReady();
+//}
 if (MyClass.isPageB()) {
     MyClass.UpdateSensorDataForB();
 }

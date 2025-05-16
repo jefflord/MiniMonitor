@@ -1,3 +1,9 @@
 # For more info on HTTP files go to https://aka.ms/vs/httpfile
 GET http://localhost/mini-monitor-data/
 
+
+### getPlaylists
+GET http://localhost:8000/getPlaylists
+
+### getPlaylistTracks
+GET http://localhost:8000/getPlaylistTracks?playlistId=PLWOllhoVg_wZ-3DKj0X8lEcGp3youqVOm
