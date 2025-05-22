@@ -348,7 +348,10 @@ class MyClass {
         }
     }
     static isPageB() {
-        return window.location.pathname.indexOf("index-b.html") >= 0;
+        if (window.location.origin === "file://") {
+            return window.location.pathname.indexOf("index-b.html") >= 0;
+        }
+        return false;
     }
     static weather_conditions = [
         { "code": 200, "short_name": "Thunderstorm", "description": "thunderstorm with light rain", "icon": "11d" },
@@ -451,11 +454,11 @@ class MyClass {
                     document.getElementById("cpu-usage").innerText = `${Math.round(sensorData.cpuTotal)}%`;
                 }
             }
-            setTimeout(async function () { await MyClass.UpdateSensorDataForB(); }, 1000);
+            setTimeout(async function () { await MyClass.UpdateSensorDataForB(); }, 5000);
         }
         catch (ex) {
             console.error(ex);
-            setTimeout(async function () { await MyClass.UpdateSensorDataForB(); }, 1000);
+            setTimeout(async function () { await MyClass.UpdateSensorDataForB(); }, 5000);
         }
     }
     static async getPlaylists() {
@@ -539,6 +542,9 @@ class MyClass {
         alert("doX1");
         return "X";
     }
+    static closeMe() {
+        window.close();
+    }
 }
 window["Util"] = Util;
 //var myYTMHelper = new YTMHelper();
@@ -548,3 +554,21 @@ window["Util"] = Util;
 if (MyClass.isPageB()) {
     MyClass.UpdateSensorDataForB();
 }
+var _YTMusicSite = null;
+function openYTMusicSite(btn) {
+    // Store the current innerText in dataset
+    btn.dataset.prevInnerText = btn.innerText;
+    btn.innerText = "Clicked";
+    btn.disabled = true;
+    setTimeout(() => {
+        btn.innerText = btn.dataset.prevInnerText;
+        btn.disabled = false;
+    }, 1000);
+    if (_YTMusicSite && !_YTMusicSite.closed) {
+        _YTMusicSite.close();
+    }
+    else {
+        _YTMusicSite = window.open('https://music.youtube.com/', 'myytmusic', 'width=1200,height=800');
+    }
+}
+//alert(MyClass.isPageB());

@@ -79,6 +79,7 @@ namespace HelloPhotinoApp
             // Window title declared here for visibility
             string windowTitle = "MiniMonitor";
 
+            
             // Creating a new PhotinoWindow instance with the fluent API
             window = new PhotinoWindow()
                 .SetTitle(windowTitle)
@@ -86,6 +87,7 @@ namespace HelloPhotinoApp
                 .SetUseOsDefaultSize(false)
                 .SetUseOsDefaultLocation(false)
                 .SetSize(new Size(1920, 720))
+                .SetUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.3240.64")
                 //.SetLocation(new Point(500, 500))
                 // Center window in the middle of the screen
                 .Center()
@@ -118,7 +120,8 @@ namespace HelloPhotinoApp
                 })
                 .Load("wwwroot/index-b.html"); // Can be used with relative path strings or "new URI()" instance to load a website.
 
-
+            
+            
 
             //StartChrome();
 

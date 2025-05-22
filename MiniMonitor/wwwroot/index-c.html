@@ -370,15 +370,12 @@
         <div class="grid-item youtube-player">
             <div class="youtube-info">
                 <div class="song-title" id="song-title">Song Title Placeholder</div>
-                <br />
                 <div class="artist-name" id="artist-name">Artist Name</div>
             </div>
             <div class="youtube-controls">
-                <button style="display:none" id="btn-yt-prev">Last</button>
+                <button id="btn-yt-prev">Last</button>
                 <button id="btn-yt-playpause" onclick="testTogglePlay()">Play</button>
-                <button style="display:none" id="btn-yt-next">Next</button>
-                <button id="btn-yt-open" onclick="openYTMusicSite(this)">Open</button>
-
+                <button id="btn-yt-next">Next</button>
             </div>
             <!-- New Playlist Button -->
             <button class="playlist-button" id="show-playlists-btn">Choose Playlist</button>
@@ -407,9 +404,9 @@
             MiniMonitor Dashboard
         </div>
 
-        <div id="player" style="display:none; position:absolute; top:20px; right:20px; width:520px; height:295px;"></div>
+        <div id="player" style="position:absolute; top:20px; right:20px; width:520px; height:295px;"></div>
 
-        <!--<iframe style="position: absolute; top: 310px; right: 20px; width: 520px; height: 295px; " src="https://www.youtube.com/"></iframe>-->
+        <iframe style="position: absolute; top: 310px; right: 20px; width: 520px; height: 295px; " src="https://www.youtube.com/"></iframe>
     </div>
 
     <!-- Playlist Modal -->
@@ -424,7 +421,7 @@
     </div>
 
     <script>
-
+        alert()
         // Basic clock and date update (can be expanded)
         function updateTime() {
             const now = new Date();
@@ -499,22 +496,18 @@
 
     <script>
 
+        /***********************/
+        // 2. This code loads the IFrame Player API code asynchronously.
+        var tag = document.createElement('script');
+
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // 3. This function creates an <iframe> (and YouTube player)
+        //    after the API code downloads.
         var player;
         var playerReady = false;
-
-        if (false) {
-            /***********************/
-            // 2. This code loads the IFrame Player API code asynchronously.
-            var tag = document.createElement('script');
-
-            tag.src = "https://www.youtube.com/iframe_api";
-            var firstScriptTag = document.getElementsByTagName('script')[0];
-            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-            // 3. This function creates an <iframe> (and YouTube player)
-            //    after the API code downloads.
-
-        }
         function onYouTubeIframeAPIReady() {
             debugger;
             player = new YT.Player('player', {
@@ -571,8 +564,6 @@
 
         // Playlist Selection functionality
         document.addEventListener('DOMContentLoaded', function () {
-            console.log("ASDFASDFSdf");
-            return;
             const playlistButton = document.getElementById('show-playlists-btn');
             const playlistModal = document.getElementById('playlist-modal');
             const closePlaylistModal = document.getElementById('close-playlist-modal');
@@ -599,10 +590,10 @@
                             : { url: 'assets/icons/music-placeholder.png' };
 
                         playlistItem.innerHTML = `
-                                                <img src="${thumbnail.url}" alt="${playlist.title}" class="playlist-thumbnail">
-                                                <div class="playlist-title">${playlist.title}</div>
-                                                <div class="playlist-description">${playlist.description || ''}</div>
-                                            `;
+                                    <img src="${thumbnail.url}" alt="${playlist.title}" class="playlist-thumbnail">
+                                    <div class="playlist-title">${playlist.title}</div>
+                                    <div class="playlist-description">${playlist.description || ''}</div>
+                                `;
 
                         // Add click handler to select this playlist
                         playlistItem.addEventListener('click', function () {
@@ -677,13 +668,7 @@
 
         }
 
-        function loadJS() {
-            var _tag = document.createElement('script');
-            const policy = window.trustedTypes.createPolicy('myAppPolicy', { createScriptURL: (input) => input });
-            _tag.src = policy.createScriptURL("http://localhost/minimonitor/assets/main.js");
-            var _fTag = document.getElementsByTagName('script')[0];
-            _fTag.parentNode.insertBefore(_tag, _fTag);
-        }
+
 
     </script>
 </body>
