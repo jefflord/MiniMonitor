@@ -65,7 +65,16 @@ namespace HelloPhotinoApp
             public float? memClock { get; set; }
             public float? cpuTotal { get; set; }
         }
-
+        public class MusicData
+        {
+            public string DataType { get; set; } = "MusicData";
+            public bool Success { get; set; }
+            public string? Title { get; set; }
+            public string? Artist { get; set; }
+            public string? Album { get; set; }
+            public string? AlbumArtUrl { get; set; }
+            public string? Error { get; set; }
+        }
 
 
 
@@ -79,7 +88,7 @@ namespace HelloPhotinoApp
             // Window title declared here for visibility
             string windowTitle = "MiniMonitor";
 
-            
+
             // Creating a new PhotinoWindow instance with the fluent API
             window = new PhotinoWindow()
                 .SetTitle(windowTitle)
@@ -120,8 +129,8 @@ namespace HelloPhotinoApp
                 })
                 .Load("wwwroot/index-b.html"); // Can be used with relative path strings or "new URI()" instance to load a website.
 
-            
-            
+
+
 
             //StartChrome();
 
@@ -1150,6 +1159,16 @@ namespace HelloPhotinoApp
         }
 
 
+        public static async Task<string> ReadBodyAsync(HttpContext context)
+        {
+            context.Request.EnableBuffering();
+            using (var reader = new StreamReader(context.Request.Body, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true))
+            {
+                var body = await reader.ReadToEndAsync();
+                context.Request.Body.Position = 0;
+                return body;
+            }
+        }
 
         public static void StartServer(PhotinoWindow window)
         {
@@ -1195,6 +1214,44 @@ namespace HelloPhotinoApp
                     return Results.Ok();
                 });
 
+                app.MapPost("/mini-monitor", async (HttpContext context) =>
+                {
+                    context.Response.Headers["Access-Control-Allow"] = "*";
+                    context.Response.Headers["Access-Control-Allow-Origin"] = "*";
+
+                    var action = context.Request.Query["action"];
+                    if (action == "putMusicData")
+                    {
+
+
+                        var body = await ReadBodyAsync(context);
+                        try
+                        {
+                            var musicData = JsonSerializer.Deserialize<MusicData>(body);
+                            // Process musicData as needed
+                            Log($"Received music data: {musicData.Title} - {musicData.Artist}");
+                            return ConvertJsonToString(new { Success = true });
+                        }
+                        catch (JsonException ex)
+                        {
+                            Log($"Error deserializing music data: {ex.Message}");
+                            return ConvertJsonToString(new { Error = "Invalid music data format" });
+                        }
+
+
+
+                    }
+                    else
+                    {
+                        return ConvertJsonToString(new { Error = $"Unknown command {action}" });
+                    }
+
+
+
+
+                });
+
+
                 app.MapGet("/mini-monitor", async (HttpContext context) =>
                 {
                     context.Response.Headers["Access-Control-Allow"] = "*";
@@ -1203,7 +1260,7 @@ namespace HelloPhotinoApp
                     var action = context.Request.Query["action"];
                     if (action == "sensorData")
                     {
-                        
+
 
 
                         if (string.IsNullOrEmpty(sensorData))
@@ -1211,7 +1268,7 @@ namespace HelloPhotinoApp
                             return ConvertJsonToString(new { NoData = true });
                         }
                         else
-                        {                            
+                        {
                             return ConvertJsonToString(new
                             {
                                 sensorData = ParseSensorData(sensorData),

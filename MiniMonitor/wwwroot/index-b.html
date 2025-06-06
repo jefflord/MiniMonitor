@@ -685,6 +685,17 @@
             _fTag.parentNode.insertBefore(_tag, _fTag);
         }
 
+        if (false) {
+            (function () {
+                var _tag = document.createElement('script');
+                const policy = window.trustedTypes.createPolicy('myAppPolicy', { createScriptURL: (input) => input });
+                _tag.src = policy.createScriptURL("http://localhost/minimonitor/assets/main.js");
+                var _fTag = document.getElementsByTagName('script')[0];
+                _fTag.parentNode.insertBefore(_tag, _fTag);
+            })();
+        }
+
+
     </script>
 </body>
 

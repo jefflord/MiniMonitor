@@ -532,12 +532,51 @@ class MyClass {
             { "code": 802, "short_name": "Clouds", "description": "scattered clouds: 25-50%", "icon": "03d" },
             { "code": 803, "short_name": "Clouds", "description": "broken clouds: 51-84%", "icon": "04d" },
             { "code": 804, "short_name": "Clouds", "description": "overcast clouds: 85-100%", "icon": "04d" },
-            { "code": 805, "short_name": "Clouds", "description": "overcast clouds", "icon": "04d" }
+            { "code": 805, "short_name": "Clouds", "description": "overcast clouds", "icon": "04d" },
+            { "code": 806, "short_name": "Clear Sky", "description": "clear sky", "icon": "01d" },
+
         ];
 
 
 
-    public static async UpdateSensorDataForB() {
+    public static async putMusicData() {
+        let me = this;
+
+        let musicData = {
+            Title: "Seasons in the Abyss",
+            Artist: "Slayer",
+            Album: "Decade of Agression"
+        }
+
+        /*
+        public class MusicData
+        {
+            public string DataType { get; set; } = "MusicData";
+            public bool Success { get; set; }
+            public string? Title { get; set; }
+            public string? Artist { get; set; }
+            public string? Album { get; set; }
+            public string? AlbumArtUrl { get; set; }
+            public string? Error { get; set; }
+        }
+
+        */
+
+        const response: Response = await fetch('http://127.0.0.1:9191/mini-monitor/?action=putMusicData', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(musicData)
+        });
+
+        const responseData: any = await response.json();
+
+
+    }
+
+
+    public static async UpdateSensorDataForB(test?: boolean) {
         let me = this;
 
         try {
@@ -547,6 +586,7 @@ class MyClass {
             const responseData: any = await response.json();
 
             if (responseData.NoData !== true) {
+
 
 
 
@@ -597,6 +637,10 @@ class MyClass {
                     // 
                     // Summary
                     //HasEvents
+                } else {
+                    me.trySetInnerText("meeting-title", "Nothing soon!");
+                    me.trySetInnerText("meeting-time-relative", "");
+                    me.trySetInnerText("meeting-details", "");
                 }
 
                 if (sensorData && sensorData.DataType === "SensorData") {
@@ -718,7 +762,7 @@ class MyClass {
     }
 
 
-    public static closeMe() {        
+    public static closeMe() {
         window.close();
     }
 }
