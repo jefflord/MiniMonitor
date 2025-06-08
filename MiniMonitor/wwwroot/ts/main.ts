@@ -798,6 +798,9 @@ class MyClass {
                     me.trySetInnerText("artist-name", musicData.Artist);
                     me.trySetInnerText("song-album", musicData.Album);
 
+                    //if (musicData.Title) {
+                    //    $("#btn-yt-open").hide();
+                    //}
 
                     /*
                     
@@ -1006,21 +1009,24 @@ if (MyClass.isPageB()) {
 
 var _YTMusicSite = null as Window | null;
 function openYTMusicSite(btn: HTMLButtonElement) {
-    // Store the current innerText in dataset
-    btn.dataset.prevInnerText = btn.innerText;
-    btn.innerText = "Clicked";
-    btn.disabled = true;
 
-    setTimeout(() => {
-        btn.innerText = btn.dataset.prevInnerText as string;
-        btn.disabled = false;
-    }, 1000);
+    MyClass.sendServerMessage("wireUpYT", { "action": "na" });
 
-    if (_YTMusicSite && !_YTMusicSite.closed) {
-        _YTMusicSite.close();
-    } else {
-        _YTMusicSite = window.open('https://music.youtube.com/', 'myytmusic', 'width=1200,height=800');
-    }
+    //// Store the current innerText in dataset
+    //btn.dataset.prevInnerText = btn.innerText;
+    //btn.innerText = "Clicked";
+    //btn.disabled = true;
+
+    //setTimeout(() => {
+    //    btn.innerText = btn.dataset.prevInnerText as string;
+    //    btn.disabled = false;
+    //}, 1000);
+
+    //if (_YTMusicSite && !_YTMusicSite.closed) {
+    //    _YTMusicSite.close();
+    //} else {
+    //    _YTMusicSite = window.open('https://music.youtube.com/', 'myytmusic', 'width=1200,height=800');
+    //}
 }
 
 

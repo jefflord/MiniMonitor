@@ -1285,6 +1285,11 @@ namespace HelloPhotinoApp
                             return ConvertJsonToString(new { Error = "Invalid music data format" });
                         }
                     }
+                    else if (action == "wireUpYT")
+                    {
+                        EdgeDevToolsAutomation.EdgeAutomation.Main(new string[] { });
+                        return ConvertJsonToString(new { Success = true });
+                    }
                     else if (action == "musicControl")
                     {
                         var body = await ReadBodyAsync(context);
