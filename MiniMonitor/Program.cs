@@ -1,6 +1,27 @@
-﻿using Photino.NET;
+﻿using Helpers;
+using HidSharp.Utility;
+using Ical.Net;
+using Ical.Net.CalendarComponents;
+using Ical.Net.DataTypes;
+using LibreHardwareMonitor.Hardware;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using MiniMonitor;
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Edge;
+using OpenQA.Selenium.Firefox;
+using Photino.NET;
+using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Drawing;
+using System.Net;
+using System.Net.Http;
+using System.Net.WebSockets;
+using System.Reflection;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -8,29 +29,10 @@ using System.Text.Json;
 using System.Windows;
 using WindowsInput;
 using WindowsInput.Native;
-using Helpers;
-using System;
-using LibreHardwareMonitor.Hardware;
-using System.Net;
-using Ical.Net;
-using Ical.Net.CalendarComponents;
-using Ical.Net.DataTypes;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using HidSharp.Utility;
-using OpenQA.Selenium.Edge;
-using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium.Firefox;
-using static System.Collections.Specialized.BitVector32;
-using System.Reflection;
-using MiniMonitor;
-using System.Net.Http;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Logging;
-using static Helpers.Win32;
 using static HelloPhotinoApp.Program;
+using static Helpers.Win32;
+using static System.Collections.Specialized.BitVector32;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
 
@@ -74,8 +76,18 @@ namespace HelloPhotinoApp
             public string? Album { get; set; }
             public string? AlbumArtUrl { get; set; }
             public string? Error { get; set; }
-        }
+            public PlayerState PlayerState { get; set; }
 
+        }
+        public enum PlayerState
+        {
+            UNSTARTED = -1,
+            ENDED = 0,
+            PLAYING = 1,
+            PAUSED = 2,
+            BUFFERING = 3,
+            CUED = 5
+        }
 
 
         [STAThread]
@@ -1170,8 +1182,44 @@ namespace HelloPhotinoApp
             }
         }
 
+        private static async Task HandleWebSocketConnection(WebSocket webSocket)
+        {
+            // Example: Send a message every 3 seconds
+            var buffer = new byte[1024];
+            while (webSocket.State == WebSocketState.Open)
+            {
+
+                foreach (string msg in ytMessagesToSend.GetConsumingEnumerable())
+                {
+                    Debug.WriteLine($"[Consumer] Received: {msg}");
+                    var bytes = System.Text.Encoding.UTF8.GetBytes(msg);
+                    await webSocket.SendAsync(new ArraySegment<byte>(bytes, 0, bytes.Length), WebSocketMessageType.Text, true, CancellationToken.None);
+
+                    Debug.WriteLine($"Sent: {msg}");
+
+                }
+
+                //string message = $"Data from server: {DateTime.Now}";
+                //var bytes = System.Text.Encoding.UTF8.GetBytes(message);
+                //await webSocket.SendAsync(new ArraySegment<byte>(bytes, 0, bytes.Length), WebSocketMessageType.Text, true, CancellationToken.None);
+
+                //Console.WriteLine($"Sent: {message}");
+                //await Task.Delay(3000); // Wait for 3 seconds
+
+                // You might also want to listen for messages from the client
+                // var receiveResult = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                // if (receiveResult.MessageType == WebSocketMessageType.Text)
+                // {
+                //     string receivedMessage = System.Text.Encoding.UTF8.GetString(buffer, 0, receiveResult.Count);
+                //     Console.WriteLine($"Received: {receivedMessage}");
+                // }
+            }
+            Console.WriteLine("WebSocket disconnected.");
+        }
+
         public static void StartServer(PhotinoWindow window)
         {
+
             new Thread(() =>
             {
                 var myId = Process.GetCurrentProcess().Id;
@@ -1214,6 +1262,7 @@ namespace HelloPhotinoApp
                     return Results.Ok();
                 });
 
+
                 app.MapPost("/mini-monitor", async (HttpContext context) =>
                 {
                     context.Response.Headers["Access-Control-Allow"] = "*";
@@ -1222,12 +1271,10 @@ namespace HelloPhotinoApp
                     var action = context.Request.Query["action"];
                     if (action == "putMusicData")
                     {
-
-
                         var body = await ReadBodyAsync(context);
                         try
                         {
-                            var musicData = JsonSerializer.Deserialize<MusicData>(body);
+                            musicData = JsonSerializer.Deserialize<MusicData>(body);
                             // Process musicData as needed
                             Log($"Received music data: {musicData.Title} - {musicData.Artist}");
                             return ConvertJsonToString(new { Success = true });
@@ -1237,9 +1284,34 @@ namespace HelloPhotinoApp
                             Log($"Error deserializing music data: {ex.Message}");
                             return ConvertJsonToString(new { Error = "Invalid music data format" });
                         }
+                    }
+                    else if (action == "musicControl")
+                    {
+                        var body = await ReadBodyAsync(context);
+                        try
+                        {
+                            var doc = JsonSerializer.Deserialize<JsonDocument>(body);
 
+                            //var musicAction = doc.RootElement.GetProperty("action").GetString();
 
+                            //if (musicAction == "pause")
+                            //{
 
+                            //}
+                            //else
+                            //{
+
+                            //}
+
+                            ytMessagesToSend.Add(body);
+
+                            return ConvertJsonToString(new { Success = true });
+                        }
+                        catch (JsonException ex)
+                        {
+                            Log($"Error deserializing data: {ex.Message}");
+                            return ConvertJsonToString(new { Error = ex.Message });
+                        }
                     }
                     else
                     {
@@ -1252,48 +1324,62 @@ namespace HelloPhotinoApp
                 });
 
 
-                app.MapGet("/mini-monitor", async (HttpContext context) =>
+                app.MapGet("/ws", async (HttpContext context) =>
                 {
-                    context.Response.Headers["Access-Control-Allow"] = "*";
-                    context.Response.Headers["Access-Control-Allow-Origin"] = "*";
-
-                    var action = context.Request.Query["action"];
-                    if (action == "sensorData")
+                    if (context.WebSockets.IsWebSocketRequest)
                     {
+                        using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                        Console.WriteLine("WebSocket connected!");
 
-
-
-                        if (string.IsNullOrEmpty(sensorData))
-                        {
-                            return ConvertJsonToString(new { NoData = true });
-                        }
-                        else
-                        {
-                            return ConvertJsonToString(new
-                            {
-                                sensorData = ParseSensorData(sensorData),
-                                calendarData = calendarData,
-                                weatherData = weatherData
-                            });
-
-                        }
-
+                        // This is where you'll handle sending and receiving data
+                        await HandleWebSocketConnection(webSocket);
                     }
                     else
                     {
-                        window.SendWebMessage(context.Request.Query["data"]);
-                        return "";
+                        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                        await context.Response.WriteAsync("WebSocket request expected.");
                     }
-
-
-
-
                 });
 
 
 
 
+                app.MapGet("/mini-monitor", async (HttpContext context) =>
+                        {
+                            context.Response.Headers["Access-Control-Allow"] = "*";
+                            context.Response.Headers["Access-Control-Allow-Origin"] = "*";
 
+                            var action = context.Request.Query["action"];
+                            if (action == "sensorData")
+                            {
+                                if (string.IsNullOrEmpty(sensorData))
+                                {
+                                    return ConvertJsonToString(new { NoData = true });
+                                }
+                                else
+                                {
+                                    return ConvertJsonToString(new
+                                    {
+                                        sensorData = ParseSensorData(sensorData),
+                                        calendarData = calendarData,
+                                        weatherData = weatherData,
+                                        musicData = musicData
+                                    });
+
+                                }
+
+                            }
+                            else
+                            {
+                                window.SendWebMessage(context.Request.Query["data"]);
+                                return "";
+                            }
+                        });
+
+
+
+
+                app.UseWebSockets();
                 app.Run();
 
             })
@@ -1450,6 +1536,8 @@ namespace HelloPhotinoApp
         private static string sensorData;
         private static object calendarData;
         private static WeatherData weatherData;
+        private static MusicData musicData = new MusicData();
+        private static BlockingCollection<string> ytMessagesToSend = new BlockingCollection<string>();
 
         private static IEnumerable<bool> HasTimeLeft(int timeMs, int waitMs, Exception exception)
         {

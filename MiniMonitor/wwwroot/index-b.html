@@ -377,7 +377,7 @@
                 <button style="display:none" id="btn-yt-prev">Last</button>
                 <button id="btn-yt-playpause" onclick="testTogglePlay()">Play</button>
                 <button style="display:none" id="btn-yt-next">Next</button>
-                <button id="btn-yt-open" onclick="openYTMusicSite(this)">Open</button>
+                <button style="display:none" id="btn-yt-open" onclick="openYTMusicSite(this)">Open</button>
 
             </div>
             <!-- New Playlist Button -->
@@ -558,15 +558,14 @@
 
 
         function testTogglePlay() {
-            if (!playerReady) {
-                alert("!playerReady")
-                return;
-            }
-            if (player.getPlayerState() === 2 || player.getPlayerState() === 5) {
-                player.playVideo();
+
+            console.log("testTogglePlay!");
+            if (document.getElementById("btn-yt-playpause").innerText === "Play") {
+                MyClass.sendServerMessage("musicControl", { "action": "play" });
             } else {
-                player.pauseVideo();
+                MyClass.sendServerMessage("musicControl", { "action": "pause" });
             }
+
         }
 
         // Playlist Selection functionality
@@ -599,10 +598,10 @@
                             : { url: 'assets/icons/music-placeholder.png' };
 
                         playlistItem.innerHTML = `
-                                                <img src="${thumbnail.url}" alt="${playlist.title}" class="playlist-thumbnail">
-                                                <div class="playlist-title">${playlist.title}</div>
-                                                <div class="playlist-description">${playlist.description || ''}</div>
-                                            `;
+                                                                <img src="${thumbnail.url}" alt="${playlist.title}" class="playlist-thumbnail">
+                                                                <div class="playlist-title">${playlist.title}</div>
+                                                                <div class="playlist-description">${playlist.description || ''}</div>
+                                                            `;
 
                         // Add click handler to select this playlist
                         playlistItem.addEventListener('click', function () {
@@ -690,6 +689,23 @@
                 var _tag = document.createElement('script');
                 const policy = window.trustedTypes.createPolicy('myAppPolicy', { createScriptURL: (input) => input });
                 _tag.src = policy.createScriptURL("http://localhost/minimonitor/assets/main.js");
+
+                // Add the onload event listener
+                _tag.onload = async function () {
+                    console.log("Script 'main.js' has loaded successfully!");
+
+                    MyClass.watchForSongChangesAndSend();
+
+                    //let x = await MyClass.putMusicData();
+                    //console.log("putMusicData", x);
+                };
+
+                // Optionally, add an onerror event listener for error handling
+                _tag.onerror = function () {
+                    alert("Error loading script 'main.js'.");
+                    // Handle the error, e.g., display a message to the user
+                };
+
                 var _fTag = document.getElementsByTagName('script')[0];
                 _fTag.parentNode.insertBefore(_tag, _fTag);
             })();

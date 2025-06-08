@@ -538,14 +538,209 @@ class MyClass {
         ];
 
 
+    public static findYouTubePlayerObject(): any {
+        const visited = new WeakSet(); // Use WeakSet to avoid strong references and memory leaks for objects
 
-    public static async putMusicData() {
+        function traverse(obj: any): any {
+            if (obj === null || typeof obj !== 'object' || visited.has(obj)) {
+                return null; // Skip null, primitives, and already visited objects
+            }
+
+            visited.add(obj);
+
+            try {
+                // Check for both methods on the current object
+                if (
+                    typeof obj.playVideo === 'function' &&
+                    typeof obj.getVideoData === 'function'
+                ) {
+                    return obj; // Found the object, return it immediately
+                }
+
+                // Iterate over properties and recurse
+                const properties = Object.getOwnPropertyNames(obj).concat(Object.keys(obj)); // Get own and enumerable properties
+
+                for (const prop of properties) {
+                    // Avoid common problematic properties to prevent errors or infinite loops
+                    // This list can be adjusted based on your needs.
+                    if (
+                        prop === 'window' ||
+                        prop === 'document' ||
+                        prop === 'self' ||
+                        prop === 'top' ||
+                        prop === 'parent' ||
+                        prop === 'frames' ||
+                        prop === 'history' ||
+                        prop === 'location' ||
+                        prop === 'navigator' ||
+                        prop === 'screen' ||
+                        prop === 'performance' ||
+                        prop === 'console' ||
+                        prop === 'localStorage' ||
+                        prop === 'sessionStorage' ||
+                        prop === 'globalThis' ||
+                        prop === '__proto__' // Avoid direct __proto__ access for robustness
+                    ) {
+                        continue;
+                    }
+
+                    let value;
+                    try {
+                        value = obj[prop];
+                    } catch (e) {
+                        // Some properties might throw errors on access
+                        continue;
+                    }
+
+                    // Only traverse if it's an object and not null (and not a function itself)
+                    if (value !== null && typeof value === 'object') {
+                        const found = traverse(value);
+                        if (found) {
+                            return found; // If found in a nested object, pass it up the chain
+                        }
+                    }
+                }
+            } catch (e) {
+                // Catch potential errors during property access (e.g., security errors)
+                console.warn(`Error traversing object:`, obj, e);
+            }
+            return null; // Not found in this branch
+        }
+
+        return traverse(window); // Start the traversal from the window object
+    }
+
+    public static handleMusicControlEvent(event: MessageEvent) {
+        let me = MyClass;
+        console.log('Message from server:', event.data);
+
+        let eventData = JSON.parse(event.data);
+
+        if (eventData.action === "pause") {
+            me.findYouTubePlayerObject().pauseVideo();
+        } else {
+            me.findYouTubePlayerObject().playVideo();
+        }
+
+
+        let songData = me.findYouTubePlayerObject().getVideoData();
+        let playerState = me.findYouTubePlayerObject().getPlayerState()
+        me.putMusicData(songData.title, songData.author, playerState);
+
+    }
+
+    public static connectWebSocket() {
+        let me = MyClass;
+        // IMPORTANT: Use 'ws://' for HTTP and 'wss://' for HTTPS
+        // If your client and server are on the same domain, you can use relative paths.
+        // Example: const socket = new WebSocket('ws://localhost:5000/ws');
+        // Or if running on a different port/domain:
+        const socket = new WebSocket('ws://127.0.0.1:9191/ws'); // Replace [YourServerPort]
+
+        socket.onopen = (event) => {
+            console.log('WebSocket connection opened:', event);
+            // You can send an initial message to the server if needed
+            // socket.send('Hello from client!');
+        };
+
+        socket.onmessage = (event) => {
+
+            me.handleMusicControlEvent(event);
+
+        };
+
+        socket.onclose = (event) => {
+            console.log('WebSocket connection closed:', event);
+            if (event.wasClean) {
+                console.log(`Connection closed cleanly, code=${event.code}, reason=${event.reason}`);
+            } else {
+                // e.g. server process killed or network down
+                console.error('Connection died');
+                // Optionally try to reconnect
+                setTimeout(me.connectWebSocket, 5000);
+            }
+        };
+
+        socket.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+    }
+
+    public static watchForSongChangesAndSend() {
+        let me = MyClass;
+
+        me.connectWebSocket();
+
+        let songTitleElement = document.querySelector("#layout > ytmusic-player-bar > div.middle-controls.style-scope.ytmusic-player-bar > div.content-info-wrapper.style-scope.ytmusic-player-bar > yt-formatted-string") as HTMLHtmlElement
+
+        let playerThing = document.querySelector("#play-pause-button #button");
+
+        if (playerThing) {
+            playerThing.addEventListener("click", function () {
+                setTimeout(function () {
+                    let songData = me.findYouTubePlayerObject().getVideoData();
+                    let playerState = me.findYouTubePlayerObject().getPlayerState()
+                    me.putMusicData(songData.title, songData.author, playerState);
+                }, 100);
+            });
+        }
+
+        if (songTitleElement) {
+            const observer = new MutationObserver((mutationsList, observer) => {
+                for (const mutation of mutationsList) {
+                    if (mutation.type === 'characterData' || mutation.type === 'childList') {
+
+                        let songData = me.findYouTubePlayerObject().getVideoData();
+                        let playerState = me.findYouTubePlayerObject().getPlayerState()
+                        me.putMusicData(songData.title, songData.author, playerState);
+                    }
+                }
+            });
+
+            observer.observe(songTitleElement, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
+        }
+
+
+        function fallBack() {
+            let songData = me.findYouTubePlayerObject().getVideoData();
+            let playerState = me.findYouTubePlayerObject().getPlayerState()
+            me.putMusicData(songData.title, songData.author, playerState);
+            setTimeout(fallBack, 1000);
+        }
+
+        fallBack();
+
+    }
+
+    public static async sendServerMessage(action: string, data: any): Promise<any> {
+        let me = this;
+
+        const response: Response = await fetch(`http://127.0.0.1:9191/mini-monitor/?action=${action}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        return await response.json();
+
+
+    }
+
+
+    public static async putMusicData(title: string, artist: string, playerState: number): Promise<any> {
         let me = this;
 
         let musicData = {
-            Title: "Seasons in the Abyss",
-            Artist: "Slayer",
-            Album: "Decade of Agression"
+            DataType: "MusicData",
+            Title: title,
+            Artist: artist,
+            PlayerState: playerState
         }
 
         /*
@@ -562,6 +757,8 @@ class MyClass {
 
         */
 
+        console.log("putMusicData", musicData);
+
         const response: Response = await fetch('http://127.0.0.1:9191/mini-monitor/?action=putMusicData', {
             method: 'POST',
             headers: {
@@ -570,7 +767,7 @@ class MyClass {
             body: JSON.stringify(musicData)
         });
 
-        const responseData: any = await response.json();
+        return await response.json();
 
 
     }
@@ -593,6 +790,33 @@ class MyClass {
                 const sensorData = responseData["sensorData"];
                 const calendarData = responseData["calendarData"];
                 const weatherData = responseData["weatherData"];
+                const musicData = responseData["musicData"];
+
+                if (musicData && musicData.DataType === "MusicData") {
+
+                    me.trySetInnerText("song-title", musicData.Title);
+                    me.trySetInnerText("artist-name", musicData.Artist);
+                    me.trySetInnerText("song-album", musicData.Album);
+
+
+                    /*
+                    
+                        UNSTARTED = -1,
+                        ENDED = 0,
+                        PLAYING = 1,
+                        PAUSED = 2,
+                        BUFFERING = 3,
+                        CUED = 5
+
+                    */
+                    if (musicData.PlayerState === 2) {
+                        me.trySetInnerText("btn-yt-playpause", "Play");
+                    } else {
+                        me.trySetInnerText("btn-yt-playpause", "Pause");
+                    }
+
+                    // 
+                }
 
 
                 if (weatherData && weatherData.DataType === "WeatherData") {
@@ -651,7 +875,7 @@ class MyClass {
                     (document.getElementById("cpu-usage") as HTMLDivElement).innerText = `${Math.round(sensorData.cpuTotal)}%`;
                 }
             }
-            setTimeout(async function () { await MyClass.UpdateSensorDataForB(); }, 5000);
+            setTimeout(async function () { await MyClass.UpdateSensorDataForB(); }, 1000);
 
 
         } catch (ex) {
