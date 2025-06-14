@@ -225,6 +225,18 @@ class MyClass {
     static external = window["external"] as any;
     static lastSoundTime = new Date("2000/01/01");
 
+    //
+    static trySetInnerHTML(id: string, text: string | null | undefined) {
+
+        if (text === null || text === undefined) {
+            text = "";
+        };
+
+        let x = document.getElementById(id) as HTMLHtmlElement;
+        if (x) {
+            x.innerHTML = text;
+        }
+    }
     static trySetInnerText(id: string, text: string | null | undefined) {
 
         if (text === null || text === undefined) {
@@ -610,6 +622,52 @@ class MyClass {
         return traverse(window); // Start the traversal from the window object
     }
 
+
+    public static clickButton(buttonElement: HTMLButtonElement): boolean {
+        // --- Input Validation ---
+        if (!buttonElement) {
+            console.error("Error: The 'buttonElement' provided is null or undefined. Cannot dispatch click event.");
+            // Return false or throw an error based on desired error handling
+            throw new Error("Invalid input: buttonElement is null or undefined.");
+        }
+        if (!(buttonElement instanceof HTMLButtonElement)) {
+            console.error(`Error: Expected an HTMLButtonElement, but received a ${buttonElement.constructor.name}.`);
+            throw new Error("Invalid input: The provided element is not an HTMLButtonElement.");
+        }
+
+        try {
+            // --- Create the MouseEvent ---
+            // A MouseEvent is used for clicks.
+            // 'bubbles: true' allows the event to propagate up the DOM tree,
+            // mimicking natural event behavior.
+            // 'cancelable: true' allows the event to be prevented (e.g., if a listener calls event.preventDefault()).
+            // 'view: window' links the event to the current window context.
+            const clickEvent = new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: window
+            });
+
+            // --- Dispatch the Event ---
+            // dispatchEvent triggers the event on the specified element.
+            // It returns false if any event listener called event.preventDefault().
+            const wasDispatchedSuccessfully = buttonElement.dispatchEvent(clickEvent);
+
+            if (wasDispatchedSuccessfully) {
+                console.log(`Successfully dispatched a synthetic click event to button with ID: ${buttonElement.id || 'N/A'}`);
+            } else {
+                console.warn(`Synthetic click event on button with ID: ${buttonElement.id || 'N/A'} was canceled by a listener.`);
+            }
+
+            return wasDispatchedSuccessfully;
+
+        } catch (error) {
+            console.error(`An error occurred while attempting to click the button with ID: ${buttonElement.id || 'N/A'}.`, error);
+            return false; // Indicate failure
+        }
+    }
+
+
     public static handleMusicControlEvent(event: MessageEvent) {
         let me = MyClass;
         console.log('Message from server:', event.data);
@@ -618,15 +676,27 @@ class MyClass {
 
         if (eventData.action === "pause") {
             me.findYouTubePlayerObject().pauseVideo();
+        } else if (eventData.action === "next") {
+            me.clickButton(document.querySelector("div.ytmusic-player-bar button.yt-icon-button[aria-label='Next']") as HTMLButtonElement);
         } else {
             me.findYouTubePlayerObject().playVideo();
         }
 
+        setTimeout(async function () {
+            await me.sendMusicData();
+            setTimeout(async function () {
+                await me.sendMusicData();
+            }, 500);
+        }, 10);
+    }
 
+    public static socket: WebSocket;
+
+    public static async sendMusicData(): Promise<any> {
+        let me = MyClass;
         let songData = me.findYouTubePlayerObject().getVideoData();
         let playerState = me.findYouTubePlayerObject().getPlayerState()
-        me.putMusicData(songData.title, songData.author, playerState);
-
+        return me.putMusicData(songData.title, songData.author, playerState);
     }
 
     public static connectWebSocket() {
@@ -635,21 +705,21 @@ class MyClass {
         // If your client and server are on the same domain, you can use relative paths.
         // Example: const socket = new WebSocket('ws://localhost:5000/ws');
         // Or if running on a different port/domain:
-        const socket = new WebSocket('ws://127.0.0.1:9191/ws'); // Replace [YourServerPort]
+        me.socket = new WebSocket('ws://127.0.0.1:9191/ws'); // Replace [YourServerPort]
 
-        socket.onopen = (event) => {
+        me.socket.onopen = (event) => {
             console.log('WebSocket connection opened:', event);
             // You can send an initial message to the server if needed
             // socket.send('Hello from client!');
         };
 
-        socket.onmessage = (event) => {
+        me.socket.onmessage = (event) => {
 
             me.handleMusicControlEvent(event);
 
         };
 
-        socket.onclose = (event) => {
+        me.socket.onclose = (event) => {
             console.log('WebSocket connection closed:', event);
             if (event.wasClean) {
                 console.log(`Connection closed cleanly, code=${event.code}, reason=${event.reason}`);
@@ -657,13 +727,18 @@ class MyClass {
                 // e.g. server process killed or network down
                 console.error('Connection died');
                 // Optionally try to reconnect
-                setTimeout(me.connectWebSocket, 5000);
+                setTimeout(me.connectWebSocket, 1000);
             }
         };
 
-        socket.onerror = (error) => {
+        me.socket.onerror = (error) => {
             console.error('WebSocket error:', error);
         };
+
+        //setTimeout(function () {
+        //    me.socket.close();
+        //    setTimeout(me.connectWebSocket, 1000);
+        //}, 60000);
     }
 
     public static watchForSongChangesAndSend() {
@@ -705,14 +780,14 @@ class MyClass {
         }
 
 
-        function fallBack() {
+        async function fallBack() {
             let songData = me.findYouTubePlayerObject().getVideoData();
             let playerState = me.findYouTubePlayerObject().getPlayerState()
-            me.putMusicData(songData.title, songData.author, playerState);
-            setTimeout(fallBack, 1000);
+            await me.putMusicData(songData.title, songData.author, playerState);
+            setTimeout(fallBack, 5000);
         }
 
-        fallBack();
+        //fallBack();
 
     }
 
@@ -866,8 +941,8 @@ class MyClass {
                     //HasEvents
                 } else {
                     me.trySetInnerText("meeting-title", "Nothing soon!");
-                    me.trySetInnerText("meeting-time-relative", "");
-                    me.trySetInnerText("meeting-details", "");
+                    me.trySetInnerHTML("meeting-time-relative", "&nbsp;");
+                    me.trySetInnerHTML("meeting-details", "&nbsp;");
                 }
 
                 if (sensorData && sensorData.DataType === "SensorData") {

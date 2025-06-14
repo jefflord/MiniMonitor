@@ -1191,7 +1191,7 @@ namespace HelloPhotinoApp
 
                 foreach (string msg in ytMessagesToSend.GetConsumingEnumerable())
                 {
-                    Debug.WriteLine($"[Consumer] Received: {msg}");
+                    Debug.WriteLine($"[Consumer] Received: {msg} at {DateTime.Now}");
                     var bytes = System.Text.Encoding.UTF8.GetBytes(msg);
                     await webSocket.SendAsync(new ArraySegment<byte>(bytes, 0, bytes.Length), WebSocketMessageType.Text, true, CancellationToken.None);
 
@@ -1333,11 +1333,34 @@ namespace HelloPhotinoApp
                 {
                     if (context.WebSockets.IsWebSocketRequest)
                     {
-                        using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                        if (webSocket != null)
+                        {
+                            try
+                            {
+                                webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "New connection", CancellationToken.None).Wait();
+                            }
+                            catch (Exception e)
+                            {
+
+                            }
+                            try
+                            {
+                                webSocket.Dispose();
+                            }
+                            catch (Exception e)
+                            {
+
+                            }
+                        }
+
+
+                        webSocket = await context.WebSockets.AcceptWebSocketAsync();
                         Console.WriteLine("WebSocket connected!");
 
                         // This is where you'll handle sending and receiving data
                         await HandleWebSocketConnection(webSocket);
+
+                        Debug.WriteLine($"Socket connected! at {DateTime.Now}");
                     }
                     else
                     {
@@ -1543,6 +1566,7 @@ namespace HelloPhotinoApp
         private static WeatherData weatherData;
         private static MusicData musicData = new MusicData();
         private static BlockingCollection<string> ytMessagesToSend = new BlockingCollection<string>();
+        private static WebSocket webSocket;
 
         private static IEnumerable<bool> HasTimeLeft(int timeMs, int waitMs, Exception exception)
         {

@@ -44,7 +44,7 @@ namespace MiniMonitor
                     Description = weatherData.Weather[0].Description
                 };
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
                 // Handle HTTP errors (e.g., network issues)
                 Console.WriteLine($"Error: {ex.Message}");

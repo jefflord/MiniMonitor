@@ -84,7 +84,7 @@
         }
 
         .time-display {
-            font-size: 125px;
+            font-size: 225px;
             /* Very large time */
             font-weight: bold;
             line-height: 1;
@@ -93,7 +93,7 @@
         }
 
         .date-display {
-            font-size: 28px;
+            font-size: 60px;
             color: #b0b0b0;
         }
 
@@ -129,12 +129,12 @@
         }
 
             .youtube-info .song-title {
-                font-size: 24px;
+                font-size: 36px;
                 font-weight: bold;
             }
 
             .youtube-info .artist-name {
-                font-size: 18px;
+                font-size: 28px;
                 color: #a0a0a0;
             }
 
@@ -277,7 +277,7 @@
                 color: white;
                 border: none;
                 padding: 15px 30px;
-                font-size: 20px;
+                font-size: 44px;
                 border-radius: 5px;
                 cursor: pointer;
             }
@@ -375,13 +375,13 @@
             </div>
             <div class="youtube-controls">
                 <button style="display:none" id="btn-yt-prev">Last</button>
-                <button id="btn-yt-playpause" onclick="testTogglePlay()">Play</button>
-                <button style="display:none" id="btn-yt-next">Next</button>
-                <button xstyle="display:none" id="btn-yt-open" onclick="openYTMusicSite(this)">Rewire</button>
+                <button id="btn-yt-playpause">Play</button>
+                <button id="btn-yt-next">Next</button>
+                <button id="btn-yt-open" onclick="openYTMusicSite(this)">Fix</button>
 
             </div>
             <!-- New Playlist Button -->
-            <button class="playlist-button" id="show-playlists-btn">Choose Playlist</button>
+            <button class="playlist-button" style="display:none"  id="show-playlists-btn">Choose Playlist</button>
         </div>
 
         <div class="grid-item meeting-info">
@@ -424,6 +424,11 @@
     </div>
 
     <script>
+
+        function SavePosition() {
+            MyClass.SendMessage('SavePosition')
+        };
+
 
         // Basic clock and date update (can be expanded)
         function updateTime() {
@@ -480,9 +485,9 @@
 
 
         // Placeholder functions for YouTube controls
-        document.getElementById('btn-yt-prev').addEventListener('click', () => console.log('YT Prev clicked'));
-        document.getElementById('btn-yt-playpause').addEventListener('click', () => console.log('YT Play/Pause clicked'));
-        document.getElementById('btn-yt-next').addEventListener('click', () => console.log('YT Next clicked'));
+        document.getElementById('btn-yt-prev').addEventListener('click', () => alert('YT Prev clicked'));
+        document.getElementById('btn-yt-playpause').addEventListener('click', () => testTogglePlay());
+        document.getElementById('btn-yt-next').addEventListener('click', () => MyClass.sendServerMessage("musicControl", { "action": "next" }));
 
         // Placeholder for meeting update
         function updateMeetingInfo() {
@@ -562,8 +567,10 @@
             console.log("testTogglePlay!");
             if (document.getElementById("btn-yt-playpause").innerText === "Play") {
                 MyClass.sendServerMessage("musicControl", { "action": "play" });
+                document.getElementById("btn-yt-playpause").innerText = "Pause";
             } else {
                 MyClass.sendServerMessage("musicControl", { "action": "pause" });
+                document.getElementById("btn-yt-playpause").innerText = "Play";
             }
 
         }
@@ -598,10 +605,10 @@
                             : { url: 'assets/icons/music-placeholder.png' };
 
                         playlistItem.innerHTML = `
-                                                                <img src="${thumbnail.url}" alt="${playlist.title}" class="playlist-thumbnail">
-                                                                <div class="playlist-title">${playlist.title}</div>
-                                                                <div class="playlist-description">${playlist.description || ''}</div>
-                                                            `;
+                                                                    <img src="${thumbnail.url}" alt="${playlist.title}" class="playlist-thumbnail">
+                                                                    <div class="playlist-title">${playlist.title}</div>
+                                                                    <div class="playlist-description">${playlist.description || ''}</div>
+                                                                `;
 
                         // Add click handler to select this playlist
                         playlistItem.addEventListener('click', function () {
