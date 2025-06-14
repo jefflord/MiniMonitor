@@ -616,13 +616,19 @@ class MyClass {
                 characterData: true
             });
         }
-        async function fallBack() {
+        async function fallBack(lastSong) {
             let songData = me.findYouTubePlayerObject().getVideoData();
             let playerState = me.findYouTubePlayerObject().getPlayerState();
             await me.putMusicData(songData.title, songData.author, playerState);
-            setTimeout(fallBack, 5000);
+            //if (lastSong != songData.title) {
+            //    await me.putMusicData(songData.title, songData.author, playerState);
+            //    lastSong = songData.title;
+            //}
+            setTimeout(function () {
+                fallBack(lastSong);
+            }, 5000);
         }
-        //fallBack();
+        fallBack();
     }
     static async sendServerMessage(action, data) {
         let me = this;
