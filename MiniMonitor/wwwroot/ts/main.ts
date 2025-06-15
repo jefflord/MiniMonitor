@@ -784,16 +784,14 @@ class MyClass {
             let songData = me.findYouTubePlayerObject().getVideoData();
             let playerState = me.findYouTubePlayerObject().getPlayerState();
 
+            try {
+                await me.putMusicData(songData.title, songData.author, playerState);
+            } catch (ex) {
+                console.error("Error getting song data", ex);
+            }
 
-            await me.putMusicData(songData.title, songData.author, playerState);
-
-            //if (lastSong != songData.title) {
-            //    await me.putMusicData(songData.title, songData.author, playerState);
-            //    lastSong = songData.title;
-            //}
-
-            setTimeout(function () {
-                fallBack(lastSong);
+            setTimeout(async function () {
+                await fallBack(lastSong);
             }, 5000);
         }
 
