@@ -34,8 +34,6 @@ using static Helpers.Win32;
 using static System.Collections.Specialized.BitVector32;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-
-
 namespace HelloPhotinoApp
 {
     class Program
@@ -180,6 +178,9 @@ namespace HelloPhotinoApp
 
             using (var client = new WebClient())
             {
+
+                client.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36");
+
                 // Provide the URL of the file to download
 
                 // Provide the local path where the file will be saved
@@ -305,13 +306,13 @@ namespace HelloPhotinoApp
 
         private static void StartCalDataThread(PhotinoWindow window)
         {
-            new Thread(async () =>
+            var thread = new Thread(async () =>
             {
                 Thread.Sleep(5000);
                 await GetCalData(window);
-
-            }).Start();
-
+            });
+            thread.IsBackground = true;
+            thread.Start();
         }
 
         private static void StartWeatherThread(PhotinoWindow window)
@@ -354,18 +355,20 @@ namespace HelloPhotinoApp
         private static void StayNormalThread(PhotinoWindow window)
         {
             Thread.Sleep(5000);
-            new Thread(() =>
+            var thread = new Thread(() =>
             {
                 while (true)
                 {
                     StayNormal();
                     Thread.Sleep(5000);
                 }
-            }).Start();
+            });
+            thread.IsBackground = true;
+            thread.Start();
         }
         private static void StartSensorThread(PhotinoWindow window)
         {
-            new Thread(() =>
+            var thread = new Thread(() =>
             {
                 Thread.Sleep(1);
                 ResoreWindowPosition();
@@ -435,7 +438,9 @@ namespace HelloPhotinoApp
                 //}
 
 
-            }).Start();
+            });
+            thread.IsBackground = true;
+            thread.Start();
         }
 
         static Computer computer = new Computer();
@@ -1219,8 +1224,7 @@ namespace HelloPhotinoApp
 
         public static void StartServer(PhotinoWindow window)
         {
-
-            new Thread(() =>
+            var thread = new Thread(() =>
             {
                 var myId = Process.GetCurrentProcess().Id;
                 foreach (var process in Process.GetProcessesByName("MiniMonitor"))
@@ -1410,10 +1414,9 @@ namespace HelloPhotinoApp
                 app.UseWebSockets();
                 app.Run();
 
-            })
-            { IsBackground = true }.Start();
-
-
+            });
+            thread.IsBackground = true;
+            thread.Start();
         }
 
         private static void GetMail()
