@@ -173,118 +173,140 @@ namespace HelloPhotinoApp
         {
 
             var config = LoadConfig();
+            var client = GetNewWebClient();
 
+            // Provide the URL of the file to download
 
+            // Provide the local path where the file will be saved
+            string localFilePath = "calendar.ics";
 
-            using (var client = new WebClient())
+            bool waitOneGotSignal = false;
+
+            while (true)
             {
 
-                client.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36");
-
-                // Provide the URL of the file to download
-
-                // Provide the local path where the file will be saved
-                string localFilePath = "calendar.ics";
-
-                bool waitOneGotSignal = false;
-
-                while (true)
+                try
                 {
-
-                    try
+                    List<Occurrence> occurrencesForToday = new List<Occurrence>();
+                    foreach (var icalUrl in config.icsFiles)
                     {
-                        List<Occurrence> occurrencesForToday = new List<Occurrence>();
-                        foreach (var icalUrl in config.icsFiles)
+                        await client.DownloadFileTaskAsync(new Uri(icalUrl), localFilePath);
+
+                        var calendar = Calendar.Load(File.ReadAllText(localFilePath));
+
+                        var x = calendar.GetOccurrences(DateTime.UtcNow.AddHours(-24), DateTime.UtcNow.AddDays(3)).ToList();
+                        var y = x.Where(o => o.Period.StartTime.Date >= DateTime.Today && o.Period.StartTime.HasTime).ToList();
+                        var z = y.OrderBy(o => o.Period.StartTime).Take(6).ToList();
+
+                        occurrencesForToday.AddRange(z);
+                    }
+
+
+                    if (occurrencesForToday.Count() > 0)
+                    {
+                        foreach (var ev in occurrencesForToday)
                         {
-                            await client.DownloadFileTaskAsync(new Uri(icalUrl), localFilePath);
+                            var originalEvent = (CalendarEvent)ev.Source;
 
-                            var calendar = Calendar.Load(File.ReadAllText(localFilePath));
-
-                            var x = calendar.GetOccurrences(DateTime.UtcNow.AddHours(-24), DateTime.UtcNow.AddDays(3)).ToList();
-                            var y = x.Where(o => o.Period.StartTime.Date >= DateTime.Today && o.Period.StartTime.HasTime).ToList();
-                            var z = y.OrderBy(o => o.Period.StartTime).Take(6).ToList();
-
-                            occurrencesForToday.AddRange(z);
-                        }
-
-
-                        if (occurrencesForToday.Count() > 0)
-                        {
-                            foreach (var ev in occurrencesForToday)
+                            if (ev.Period.StartTime.AsUtc < DateTime.UtcNow.AddMinutes(-10))
                             {
-                                var originalEvent = (CalendarEvent)ev.Source;
-
-                                if (ev.Period.StartTime.AsUtc < DateTime.UtcNow.AddMinutes(-10))
-                                {
-                                    // too old, skip
-                                    continue;
-                                }
-
-                                calendarData = new
-                                {
-                                    DataType = "CalendarData",
-                                    HasEvents = true,
-                                    Summary = originalEvent.Summary,
-                                    StartTimeUtc = ev.Period.StartTime.AsUtc.ToString("O"),
-                                    WaitOneGotSignal = waitOneGotSignal
-                                };
-
-                                window.SendWebMessage(JsonSerializer.Serialize(calendarData));
-
-                                break;
+                                // too old, skip
+                                continue;
                             }
-                        }
-                        else
-                        {
+
                             calendarData = new
                             {
                                 DataType = "CalendarData",
-                                HasEvents = false
+                                HasEvents = true,
+                                Summary = originalEvent.Summary,
+                                StartTimeUtc = ev.Period.StartTime.AsUtc.ToString("O"),
+                                WaitOneGotSignal = waitOneGotSignal
                             };
+
                             window.SendWebMessage(JsonSerializer.Serialize(calendarData));
+
+                            break;
                         }
-
-
-
-                        //
-                        // Print the events for today
-                        if (false)
-                        {
-                            foreach (var ev in occurrencesForToday)
-                            {
-                                var originalEvent = (CalendarEvent)ev.Source;
-                                Log($"Summary: {originalEvent.Summary}");
-                                Log($"Start Time: {ev.Period.StartTime}");
-                                Log($"End Time: {ev.Period.EndTime}");
-                                Log();
-                            }
-                        }
-
-                        errorCount = 0;
-                        waitOneGotSignal = AutoResetEventForCalendar.WaitOne(5 * 60 * 1000);
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        var data = new
+                        calendarData = new
                         {
                             DataType = "CalendarData",
-                            HasEvents = true,
-                            Summary = ex.Message,
-                            StartTimeUtc = DateTime.UtcNow,
-                            WaitOneGotSignal = waitOneGotSignal
+                            HasEvents = false
                         };
-
-                        window.SendWebMessage(JsonSerializer.Serialize(data));
-
-                        errorCount++;
-                        Log($"Error downloading file: {ex.Message}");
-                        waitOneGotSignal = AutoResetEventForCalendar.WaitOne(60000);
+                        window.SendWebMessage(JsonSerializer.Serialize(calendarData));
                     }
 
+
+
+                    //
+                    // Print the events for today
+                    if (false)
+                    {
+                        foreach (var ev in occurrencesForToday)
+                        {
+                            var originalEvent = (CalendarEvent)ev.Source;
+                            Log($"Summary: {originalEvent.Summary}");
+                            Log($"Start Time: {ev.Period.StartTime}");
+                            Log($"End Time: {ev.Period.EndTime}");
+                            Log();
+                        }
+                    }
+
+                    errorCount = 0;
+                    waitOneGotSignal = AutoResetEventForCalendar.WaitOne(5 * 60 * 1000);
+                }
+                catch (Exception ex)
+                {
+                    // repair client
+                    client = GetNewWebClient(ref client);
+
+
+
+                    calendarData = new
+                    {
+                        DataType = "CalendarData",
+                        HasEvents = true,
+                        Summary = ex.Message,
+                        StartTimeUtc = DateTime.UtcNow.ToString("O"),
+                        WaitOneGotSignal = waitOneGotSignal
+                    };
+
+                    window.SendWebMessage(JsonSerializer.Serialize(calendarData));
+
+                    errorCount++;
+                    Log($"Error downloading file: {ex.Message}");
+                    waitOneGotSignal = AutoResetEventForCalendar.WaitOne(60000);
                 }
 
             }
 
+
+
+        }
+
+        private static WebClient GetNewWebClient()
+        {
+            var client = new WebClient();
+            client.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36");
+            return client;
+        }
+
+        private static WebClient GetNewWebClient(ref WebClient oldClient)
+        {
+
+            if (oldClient != null)
+            {
+                try
+                {
+                    oldClient.Dispose();
+                }
+                catch { }
+                oldClient = null;
+            }
+
+            return GetNewWebClient();
         }
 
         private static void Log()
@@ -513,6 +535,41 @@ namespace HelloPhotinoApp
 
 
 
+        private static void CloseApplication()
+        {
+            if (process != null && !process.HasExited)
+            {
+                process.CloseMainWindow();
+                try
+                {
+                    process.Kill();
+                }
+                catch { }
+
+            }
+            if (YTChromeWindow.process != null)
+            {
+                YTChromeWindow.process.Kill();
+            }
+
+            if (driver != null)
+            {
+                try
+                {
+                    driver.Close();
+                }
+                catch (Exception e)
+                {
+
+                }
+
+            }
+
+            CleanupChrome();
+
+            Environment.Exit(0);
+        }
+
         private static void HandleMessage(object sender, string message)
         {
             var window = (PhotinoWindow)sender;
@@ -520,37 +577,7 @@ namespace HelloPhotinoApp
 
             if (message == "Close")
             {
-                if (process != null && !process.HasExited)
-                {
-                    process.CloseMainWindow();
-                    try
-                    {
-                        process.Kill();
-                    }
-                    catch { }
-
-                }
-                if (YTChromeWindow.process != null)
-                {
-                    YTChromeWindow.process.Kill();
-                }
-
-                if (driver != null)
-                {
-                    try
-                    {
-                        driver.Close();
-                    }
-                    catch (Exception e)
-                    {
-
-                    }
-
-                }
-
-                CleanupChrome();
-
-                Environment.Exit(0);
+                CloseApplication();
             }
 
 
@@ -1292,6 +1319,11 @@ namespace HelloPhotinoApp
                     else if (action == "wireUpYT")
                     {
                         EdgeDevToolsAutomation.EdgeAutomation.Main(new string[] { });
+                        return ConvertJsonToString(new { Success = true });
+                    }
+                    else if (action == "CloseApp")
+                    {
+                        CloseApplication();
                         return ConvertJsonToString(new { Success = true });
                     }
                     else if (action == "musicControl")
