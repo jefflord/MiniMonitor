@@ -164,8 +164,8 @@ namespace HelloPhotinoApp
 
 
 
-        private static int maxErrors = 10;
-        private static int errorCount = 0;
+
+
 
         private static AutoResetEvent AutoResetEventForCalendar = new AutoResetEvent(false);
 
@@ -174,6 +174,11 @@ namespace HelloPhotinoApp
 
             var config = LoadConfig();
             var client = GetNewWebClient();
+            var lastSuccess = DateTime.MinValue;
+            var lastError = DateTime.MinValue;
+            var successCount = 0;
+            var errorCount = 0;
+            var totalErrorCount = 0;
 
             // Provide the URL of the file to download
 
@@ -191,7 +196,7 @@ namespace HelloPhotinoApp
                     foreach (var icalUrl in config.icsFiles)
                     {
                         await client.DownloadFileTaskAsync(new Uri(icalUrl), localFilePath);
-
+                        lastSuccess = DateTime.UtcNow;
                         var calendar = Calendar.Load(File.ReadAllText(localFilePath));
 
                         var x = calendar.GetOccurrences(DateTime.UtcNow.AddHours(-24), DateTime.UtcNow.AddDays(3)).ToList();
@@ -254,30 +259,69 @@ namespace HelloPhotinoApp
                         }
                     }
 
+                    successCount++;
                     errorCount = 0;
-                    waitOneGotSignal = AutoResetEventForCalendar.WaitOne(5 * 60 * 1000);
+                    waitOneGotSignal = AutoResetEventForCalendar.WaitOne(10 * 60 * 1000);
+
+                    if (waitOneGotSignal)
+                    {
+                        Log("Got signal to update calendar data.");
+                        // Reset the event so it can be used again
+                        AutoResetEventForCalendar.Reset();
+
+                        calendarData = new
+                        {
+                            DataType = "CalendarData",
+                            HasEvents = true,
+                            Summary = "Refreshing...",
+                            StartTimeUtc = (string)null,
+                            WaitOneGotSignal = waitOneGotSignal
+                        };
+
+                        window.SendWebMessage(JsonSerializer.Serialize(calendarData));
+
+                    }
+                    else
+                    {
+                        Log("No signal received, continuing to fetch calendar data.");
+                    }
+
                 }
                 catch (Exception ex)
                 {
+
                     // repair client
                     client = GetNewWebClient(ref client);
 
 
-
-                    calendarData = new
-                    {
-                        DataType = "CalendarData",
-                        HasEvents = true,
-                        Summary = ex.Message,
-                        StartTimeUtc = DateTime.UtcNow.ToString("O"),
-                        WaitOneGotSignal = waitOneGotSignal
-                    };
-
-                    window.SendWebMessage(JsonSerializer.Serialize(calendarData));
-
+                    lastError = DateTime.UtcNow;
                     errorCount++;
-                    Log($"Error downloading file: {ex.Message}");
-                    waitOneGotSignal = AutoResetEventForCalendar.WaitOne(60000);
+                    totalErrorCount++;
+
+                    if (errorCount >= 3)
+                    {
+                        calendarData = new
+                        {
+                            DataType = "CalendarData",
+                            HasEvents = true,
+                            Summary = ex.Message,
+                            StartTimeUtc = (string)null,
+                            WaitOneGotSignal = waitOneGotSignal
+                        };
+
+                        window.SendWebMessage(JsonSerializer.Serialize(calendarData));
+
+                        errorCount = 0;
+                        // If we have had 3 errors, wait for a longer time
+                        waitOneGotSignal = AutoResetEventForCalendar.WaitOne(5 * 60 * 1000);
+                    }
+                    else
+                    {
+                        // Wait for a shorter time
+                        waitOneGotSignal = AutoResetEventForCalendar.WaitOne(60 * 1000);
+                    }
+
+                    Log($"Error fetching calendar data: {ex.Message}");
                 }
 
             }
@@ -1324,6 +1368,11 @@ namespace HelloPhotinoApp
                     else if (action == "CloseApp")
                     {
                         CloseApplication();
+                        return ConvertJsonToString(new { Success = true });
+                    }
+                    else if (action == "RefreshCalendar")
+                    {
+                        AutoResetEventForCalendar.Set();
                         return ConvertJsonToString(new { Success = true });
                     }
                     else if (action == "musicControl")

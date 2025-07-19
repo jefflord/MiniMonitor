@@ -939,7 +939,12 @@ class MyClass {
                     let relativeTimeFromNow = luxon.DateTime.fromISO(calendarData.StartTimeUtc).toRelative({ base: luxon.DateTime.now(), style: 'long' });
                     me.trySetInnerText("meeting-time-relative", relativeTimeFromNow);
 
-                    me.trySetInnerText("meeting-details", luxon.DateTime.fromISO(calendarData.StartTimeUtc).toFormat('yyyy-MM-dd hh:mm a'));
+                    if (calendarData.StartTimeUtc) {
+                        me.trySetInnerText("meeting-details", luxon.DateTime.fromISO(calendarData.StartTimeUtc).toFormat('yyyy-MM-dd hh:mm a'));
+                    } else {
+                        me.trySetInnerText("meeting-details", "TBD");
+                    }
+                    
                     //
 
                     // 

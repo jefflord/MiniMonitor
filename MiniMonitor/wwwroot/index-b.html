@@ -347,7 +347,7 @@
 <body>
     <div class="container">
         <!-- Header: Clock/Date and Weather -->
-        <div class="grid-item header-left">
+        <div class="grid-item header-left" onclick="MyClass.sendServerMessage('RefreshCalendar', {})">
             <!-- This will now contain Meeting Info -->
             <div class="meeting-title" id="meeting-title">Next Meeting: ...</div>
             <div class="meeting-time-relative" id="meeting-time-relative">in ?? minutes</div>
