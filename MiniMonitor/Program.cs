@@ -187,7 +187,7 @@ namespace HelloPhotinoApp
 
             bool waitOneGotSignal = false;
 
-            bool fake = true;
+            bool fake = false;
             while (true)
             {
 
