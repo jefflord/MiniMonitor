@@ -673,6 +673,21 @@ class MyClass {
         });
         return await response.json();
     }
+    // Static variables for managing the meeting flash effect
+    static meetingFlashIntervalRef = 0;
+    static lastMeetingFlashState = false;
+    static async FlashElement(element, durationMs = Infinity, rateMs = 500) {
+        if (!element)
+            return;
+        let running = true;
+        const endTime = Date.now() + durationMs;
+        while (running && Date.now() < endTime) {
+            element.style.opacity = element.style.opacity === "0.5" ? "1" : "0.5";
+            await new Promise(resolve => setTimeout(resolve, rateMs));
+        }
+        // Ensure final state is visible
+        element.style.opacity = "1";
+    }
     static async UpdateSensorDataForB(test) {
         let me = this;
         try {
@@ -729,6 +744,66 @@ class MyClass {
                     me.trySetInnerText("meeting-title", calendarData.Summary);
                     let relativeTimeFromNow = luxon.DateTime.fromISO(calendarData.StartTimeUtc).toRelative({ base: luxon.DateTime.now(), style: 'long' });
                     me.trySetInnerText("meeting-time-relative", relativeTimeFromNow);
+                    // Calculate minutes until meeting for flash logic
+                    let minutesUntil = (luxon.DateTime.fromISO(calendarData.StartTimeUtc).toMillis() - luxon.DateTime.now().toMillis()) / (1000 * 60);
+                    let gridIitemHeaderLeft = document.querySelector(".grid-item.header-left");
+                    // Handle flashing for meeting-time-relative when less than 5 minutes
+                    gridIitemHeaderLeft.style.backgroundColor = "";
+                    if (minutesUntil <= 1 && minutesUntil > 0) {
+                        gridIitemHeaderLeft.style.backgroundColor = "crimson";
+                        // Start flashing if not already flashing
+                        if (!me.lastMeetingFlashState) {
+                            me.lastMeetingFlashState = true;
+                            if (me.meetingFlashIntervalRef) {
+                                clearInterval(me.meetingFlashIntervalRef);
+                            }
+                            me.meetingFlashIntervalRef = setInterval(async () => {
+                                const element = document.getElementById("meeting-time-relative");
+                                await MyClass.FlashElement(element, 500, 100);
+                            }, 1000);
+                        }
+                    }
+                    else if (minutesUntil <= 5 && minutesUntil > 0) {
+                        // Start flashing if not already flashing
+                        if (!me.lastMeetingFlashState) {
+                            me.lastMeetingFlashState = true;
+                            if (me.meetingFlashIntervalRef) {
+                                clearInterval(me.meetingFlashIntervalRef);
+                            }
+                            me.meetingFlashIntervalRef = setInterval(async () => {
+                                const element = document.getElementById("meeting-time-relative");
+                                await MyClass.FlashElement(element, 500, 100);
+                            }, 2000);
+                        }
+                    }
+                    else if (minutesUntil <= 10 && minutesUntil > 0) {
+                        // Start flashing if not already flashing
+                        if (!me.lastMeetingFlashState) {
+                            me.lastMeetingFlashState = true;
+                            if (me.meetingFlashIntervalRef) {
+                                clearInterval(me.meetingFlashIntervalRef);
+                            }
+                            me.meetingFlashIntervalRef = setInterval(async () => {
+                                const element = document.getElementById("meeting-time-relative");
+                                await MyClass.FlashElement(element, 1000, 100);
+                            }, 10000);
+                        }
+                    }
+                    else {
+                        // Stop flashing if meeting is more than 5 minutes away or has started
+                        if (me.lastMeetingFlashState) {
+                            me.lastMeetingFlashState = false;
+                            if (me.meetingFlashIntervalRef) {
+                                clearInterval(me.meetingFlashIntervalRef);
+                                me.meetingFlashIntervalRef = 0;
+                            }
+                            // Ensure element is visible when stopping flash
+                            const element = document.getElementById("meeting-time-relative");
+                            if (element) {
+                                element.style.opacity = "1";
+                            }
+                        }
+                    }
                     if (calendarData.StartTimeUtc) {
                         me.trySetInnerText("meeting-details", luxon.DateTime.fromISO(calendarData.StartTimeUtc).toFormat('yyyy-MM-dd hh:mm a'));
                     }
@@ -743,9 +818,22 @@ class MyClass {
                     //HasEvents
                 }
                 else {
+                    // No meeting data - stop any flashing
+                    if (me.lastMeetingFlashState) {
+                        me.lastMeetingFlashState = false;
+                        if (me.meetingFlashIntervalRef) {
+                            clearInterval(me.meetingFlashIntervalRef);
+                            me.meetingFlashIntervalRef = 0;
+                        }
+                    }
                     me.trySetInnerText("meeting-title", "Nothing soon!");
                     me.trySetInnerHTML("meeting-time-relative", "&nbsp;");
                     me.trySetInnerHTML("meeting-details", "&nbsp;");
+                    // Ensure meeting-time-relative is visible when no meeting
+                    const element = document.getElementById("meeting-time-relative");
+                    if (element) {
+                        element.style.opacity = "1";
+                    }
                 }
                 if (sensorData && sensorData.DataType === "SensorData") {
                     document.getElementById("gpu-usage").innerText = `${sensorData.gpuLoad}%`;

@@ -187,11 +187,31 @@ namespace HelloPhotinoApp
 
             bool waitOneGotSignal = false;
 
+            bool fake = true;
             while (true)
             {
 
                 try
                 {
+
+                    if (fake)
+                    {
+
+                        var faketime = DateTime.UtcNow.AddMinutes(9);
+                        calendarData = new
+                        {
+                            DataType = "CalendarData",
+                            HasEvents = true,
+                            Summary = "fake time",
+                            StartTimeUtc = faketime.ToString("O"),
+                            WaitOneGotSignal = true
+                        };
+
+                        window.SendWebMessage(JsonSerializer.Serialize(calendarData));
+
+                        break;
+                    }
+
                     List<Occurrence> occurrencesForToday = new List<Occurrence>();
                     foreach (var icalUrl in config.icsFiles)
                     {
