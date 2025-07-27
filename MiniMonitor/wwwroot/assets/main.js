@@ -154,10 +154,70 @@ class Util {
         return JSON.stringify(result);
     }
 }
+class AudioScheduler {
+    audioElement;
+    currentIntervalId = null; // To store the ID of the current interval
+    nextPlayTimeoutId = null; // To store the ID of the next play timeout
+    constructor(audioElement) {
+        this.audioElement = audioElement;
+    }
+    /**
+     * Schedules the audio to play repeatedly at a given interval.
+     * If called with a new interval, any previously scheduled interval is cleared.
+     * @param intervalMs The interval in milliseconds at which to play the sound.
+     */
+    playSound(intervalMs) {
+        // Clear any existing interval
+        this.cancelAllScheduledPlays();
+        if (intervalMs <= 0) {
+            console.warn("Interval must be a positive number. Sound will not play.");
+            return;
+        }
+        // Immediately play the sound for the first time
+        this.audioElement.play().catch(e => console.error("Error playing audio:", e));
+        // Schedule subsequent plays
+        this.currentIntervalId = window.setInterval(() => {
+            this.audioElement.play().catch(e => console.error("Error playing audio:", e));
+        }, intervalMs);
+    }
+    /**
+     * Plays the sound once after a specified delay.
+     * If called while a repeating interval is active, the interval is cleared,
+     * and only this single play event is scheduled.
+     * @param delayMs The delay in milliseconds before playing the sound.
+     */
+    playOnceAfterDelay(delayMs) {
+        this.cancelAllScheduledPlays();
+        if (delayMs < 0) {
+            console.warn("Delay must be a non-negative number. Sound will not play.");
+            return;
+        }
+        this.nextPlayTimeoutId = window.setTimeout(() => {
+            this.audioElement.play().catch(e => console.error("Error playing audio:", e));
+            this.nextPlayTimeoutId = null; // Clear the timeout ID after it executes
+        }, delayMs);
+    }
+    /**
+     * Cancels all currently scheduled playSound events, both repeating intervals and single future plays.
+     */
+    cancelAllScheduledPlays() {
+        if (this.currentIntervalId !== null) {
+            window.clearInterval(this.currentIntervalId);
+            this.currentIntervalId = null;
+            console.log("Cleared existing sound interval.");
+        }
+        if (this.nextPlayTimeoutId !== null) {
+            window.clearTimeout(this.nextPlayTimeoutId);
+            this.nextPlayTimeoutId = null;
+            console.log("Cleared existing future play timeout.");
+        }
+    }
+}
 class MyClass {
     static ytm = null;
     static external = window["external"];
     static lastSoundTime = new Date("2000/01/01");
+    static audioScheduler = new AudioScheduler(new Audio('assets/Alarm04.wav'));
     //
     static trySetInnerHTML(id, text) {
         if (text === null || text === undefined) {
@@ -749,11 +809,13 @@ class MyClass {
                     let gridIitemHeaderLeft = document.querySelector(".grid-item.header-left");
                     // Handle flashing for meeting-time-relative when less than 5 minutes
                     gridIitemHeaderLeft.style.backgroundColor = "";
+                    gridIitemHeaderLeft.style.border = "";
                     if (minutesUntil <= 1 && minutesUntil > 0) {
-                        gridIitemHeaderLeft.style.backgroundColor = "crimson";
+                        gridIitemHeaderLeft.style.backgroundColor = "#ff00004a";
                         // Start flashing if not already flashing
                         if (!me.lastMeetingFlashState) {
                             me.lastMeetingFlashState = true;
+                            me.audioScheduler.playOnceAfterDelay(100);
                             if (me.meetingFlashIntervalRef) {
                                 clearInterval(me.meetingFlashIntervalRef);
                             }
@@ -765,33 +827,53 @@ class MyClass {
                     }
                     else if (minutesUntil <= 5 && minutesUntil > 0) {
                         // Start flashing if not already flashing
+                        gridIitemHeaderLeft.style.border = "1px #ff5500 dashed";
                         if (!me.lastMeetingFlashState) {
                             me.lastMeetingFlashState = true;
+                            me.audioScheduler.playSound(1 * 60000);
                             if (me.meetingFlashIntervalRef) {
                                 clearInterval(me.meetingFlashIntervalRef);
                             }
                             me.meetingFlashIntervalRef = setInterval(async () => {
                                 const element = document.getElementById("meeting-time-relative");
                                 await MyClass.FlashElement(element, 500, 100);
-                            }, 2000);
+                            }, 5000);
                         }
                     }
                     else if (minutesUntil <= 10 && minutesUntil > 0) {
                         // Start flashing if not already flashing
+                        gridIitemHeaderLeft.style.border = "1px #ff55007d dashed";
                         if (!me.lastMeetingFlashState) {
                             me.lastMeetingFlashState = true;
+                            me.audioScheduler.playSound(3 * 60000);
                             if (me.meetingFlashIntervalRef) {
                                 clearInterval(me.meetingFlashIntervalRef);
                             }
                             me.meetingFlashIntervalRef = setInterval(async () => {
                                 const element = document.getElementById("meeting-time-relative");
                                 await MyClass.FlashElement(element, 1000, 100);
-                            }, 10000);
+                            }, 30000); // 
+                        }
+                    }
+                    else if (minutesUntil <= 30 && minutesUntil > 0) {
+                        // Start flashing if not already flashing
+                        gridIitemHeaderLeft.style.border = "1px #f9ff004d dashed";
+                        if (!me.lastMeetingFlashState) {
+                            me.lastMeetingFlashState = true;
+                            me.audioScheduler.playSound(10 * 60000);
+                            if (me.meetingFlashIntervalRef) {
+                                clearInterval(me.meetingFlashIntervalRef);
+                            }
+                            me.meetingFlashIntervalRef = setInterval(async () => {
+                                const element = document.getElementById("meeting-time-relative");
+                                await MyClass.FlashElement(element, 2000, 200);
+                            }, 60000); // 
                         }
                     }
                     else {
-                        // Stop flashing if meeting is more than 5 minutes away or has started
+                        // Stop flashing if meeting is more than X minutes away or has started
                         if (me.lastMeetingFlashState) {
+                            me.audioScheduler.cancelAllScheduledPlays();
                             me.lastMeetingFlashState = false;
                             if (me.meetingFlashIntervalRef) {
                                 clearInterval(me.meetingFlashIntervalRef);

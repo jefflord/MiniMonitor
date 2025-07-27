@@ -187,7 +187,7 @@ namespace HelloPhotinoApp
 
             bool waitOneGotSignal = false;
 
-            bool fake = false;
+            bool fake = !true;
             while (true)
             {
 
@@ -197,7 +197,7 @@ namespace HelloPhotinoApp
                     if (fake)
                     {
 
-                        var faketime = DateTime.UtcNow.AddMinutes(9);
+                        var faketime = DateTime.UtcNow.AddMinutes(4);
                         calendarData = new
                         {
                             DataType = "CalendarData",
@@ -394,7 +394,7 @@ namespace HelloPhotinoApp
         {
             var thread = new Thread(async () =>
             {
-                Thread.Sleep(5000);
+                Thread.Sleep(1000);
                 await GetCalData(window);
             });
             thread.IsBackground = true;
