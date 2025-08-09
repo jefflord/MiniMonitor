@@ -209,102 +209,121 @@ namespace HelloPhotinoApp
 
                         window.SendWebMessage(JsonSerializer.Serialize(calendarData));
 
-                        break;
+
+                        successCount++;
+                        errorCount = 0;
+                        waitOneGotSignal = AutoResetEventForCalendar.WaitOne(10 * 60 * 1000);
+
                     }
-
-                    List<Occurrence> occurrencesForToday = new List<Occurrence>();
-                    foreach (var icalUrl in config.icsFiles)
+                    else
                     {
-                        await client.DownloadFileTaskAsync(new Uri(icalUrl), localFilePath);
-                        lastSuccess = DateTime.UtcNow;
-                        var calendar = Calendar.Load(File.ReadAllText(localFilePath));
 
-                        var x = calendar.GetOccurrences(DateTime.UtcNow.AddHours(-24), DateTime.UtcNow.AddDays(3)).ToList();
-                        var y = x.Where(o => o.Period.StartTime.Date >= DateTime.Today && o.Period.StartTime.HasTime).ToList();
-                        var z = y.OrderBy(o => o.Period.StartTime).Take(6).ToList();
-
-                        occurrencesForToday.AddRange(z);
-                    }
-
-
-                    if (occurrencesForToday.Count() > 0)
-                    {
-                        foreach (var ev in occurrencesForToday)
+                        List<Occurrence> occurrencesForToday = new List<Occurrence>();
+                        foreach (var icalUrl in config.icsFiles)
                         {
-                            var originalEvent = (CalendarEvent)ev.Source;
+                            await client.DownloadFileTaskAsync(new Uri(icalUrl), localFilePath);
+                            lastSuccess = DateTime.UtcNow;
+                            var calendar = Calendar.Load(File.ReadAllText(localFilePath));
 
-                            if (ev.Period.StartTime.AsUtc < DateTime.UtcNow.AddMinutes(-10))
+                            var x = calendar.GetOccurrences(DateTime.UtcNow.AddHours(-24), DateTime.UtcNow.AddDays(3)).ToList();
+                            var y = x.Where(o => o.Period.StartTime.Date >= DateTime.Today && o.Period.StartTime.HasTime).ToList();
+                            var z = y.OrderBy(o => o.Period.StartTime).Take(6).ToList();
+
+                            occurrencesForToday.AddRange(z);
+                        }
+
+
+                        if (occurrencesForToday.Count() > 0)
+                        {
+                            var hadEvent = false;
+                            foreach (var ev in occurrencesForToday)
                             {
-                                // too old, skip
-                                continue;
+                                var originalEvent = (CalendarEvent)ev.Source;
+
+                                if (ev.Period.StartTime.AsUtc < DateTime.UtcNow.AddMinutes(-10))
+                                {
+                                    // too old, skip
+                                    continue;
+                                }
+                                hadEvent = true;
+                                calendarData = new
+                                {
+                                    DataType = "CalendarData",
+                                    HasEvents = true,
+                                    Summary = originalEvent.Summary,
+                                    StartTimeUtc = ev.Period.StartTime.AsUtc.ToString("O"),
+                                    WaitOneGotSignal = waitOneGotSignal
+                                };
+
+                                window.SendWebMessage(JsonSerializer.Serialize(calendarData));
+
+
+                                break;
                             }
+                            if (!hadEvent)
+                            {
+                                calendarData = new
+                                {
+                                    DataType = "CalendarData",
+                                    HasEvents = false
+                                };
+                                window.SendWebMessage(JsonSerializer.Serialize(calendarData));
+                            }
+                        }
+                        else
+                        {
+                            calendarData = new
+                            {
+                                DataType = "CalendarData",
+                                HasEvents = false
+                            };
+                            window.SendWebMessage(JsonSerializer.Serialize(calendarData));
+                        }
+
+
+
+                        //
+                        // Print the events for today
+                        if (false)
+                        {
+                            foreach (var ev in occurrencesForToday)
+                            {
+                                var originalEvent = (CalendarEvent)ev.Source;
+                                Log($"Summary: {originalEvent.Summary}");
+                                Log($"Start Time: {ev.Period.StartTime}");
+                                Log($"End Time: {ev.Period.EndTime}");
+                                Log();
+                            }
+                        }
+
+                        successCount++;
+                        errorCount = 0;
+                        waitOneGotSignal = AutoResetEventForCalendar.WaitOne(10 * 60 * 1000);
+
+                        if (waitOneGotSignal)
+                        {
+                            Log("Got signal to update calendar data.");
+                            // Reset the event so it can be used again
+                            AutoResetEventForCalendar.Reset();
 
                             calendarData = new
                             {
                                 DataType = "CalendarData",
                                 HasEvents = true,
-                                Summary = originalEvent.Summary,
-                                StartTimeUtc = ev.Period.StartTime.AsUtc.ToString("O"),
+                                Summary = "Refreshing...",
+                                StartTimeUtc = (string)null,
                                 WaitOneGotSignal = waitOneGotSignal
                             };
 
                             window.SendWebMessage(JsonSerializer.Serialize(calendarData));
 
-                            break;
                         }
-                    }
-                    else
-                    {
-                        calendarData = new
+                        else
                         {
-                            DataType = "CalendarData",
-                            HasEvents = false
-                        };
-                        window.SendWebMessage(JsonSerializer.Serialize(calendarData));
-                    }
-
-
-
-                    //
-                    // Print the events for today
-                    if (false)
-                    {
-                        foreach (var ev in occurrencesForToday)
-                        {
-                            var originalEvent = (CalendarEvent)ev.Source;
-                            Log($"Summary: {originalEvent.Summary}");
-                            Log($"Start Time: {ev.Period.StartTime}");
-                            Log($"End Time: {ev.Period.EndTime}");
-                            Log();
+                            Log("No signal received, continuing to fetch calendar data.");
                         }
                     }
 
-                    successCount++;
-                    errorCount = 0;
-                    waitOneGotSignal = AutoResetEventForCalendar.WaitOne(10 * 60 * 1000);
-
-                    if (waitOneGotSignal)
-                    {
-                        Log("Got signal to update calendar data.");
-                        // Reset the event so it can be used again
-                        AutoResetEventForCalendar.Reset();
-
-                        calendarData = new
-                        {
-                            DataType = "CalendarData",
-                            HasEvents = true,
-                            Summary = "Refreshing...",
-                            StartTimeUtc = (string)null,
-                            WaitOneGotSignal = waitOneGotSignal
-                        };
-
-                        window.SendWebMessage(JsonSerializer.Serialize(calendarData));
-
-                    }
-                    else
-                    {
-                        Log("No signal received, continuing to fetch calendar data.");
-                    }
 
                 }
                 catch (Exception ex)
