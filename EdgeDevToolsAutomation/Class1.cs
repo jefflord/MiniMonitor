@@ -78,7 +78,7 @@ namespace EdgeDevToolsAutomation
             Thread.Sleep(30); // Wait for focus to shift
 
             // 3. Add and run some JS
-            string jsCode = @"if(typeof(MyClass)==='undefined'){!function(){var e=document.createElement(""script"");let t=window.trustedTypes.createPolicy(""myAppPolicy"",{createScriptURL:e=>e});e.src=t.createScriptURL(""http://localhost/minimonitor/assets/main.js""),e.onload=async function(){console.log(""Script 'main.js' has loaded successfully!""),MyClass.watchForSongChangesAndSend()},e.onerror=function(){alert(""Error loading script 'main.js'."")};var r=document.getElementsByTagName(""script"")[0];r.parentNode.insertBefore(e,r)}();} else {console.log('XXXXXX')}";
+            string jsCode = @"if(typeof(MyClass)==='undefined'){!function(){var e=document.createElement(""script"");let t=window.trustedTypes.createPolicy(""myAppPolicy"",{createScriptURL:e=>e});e.src=t.createScriptURL(""http://localhost:8081/minimonitor/assets/main.js""),e.onload=async function(){console.log(""Script 'main.js' has loaded successfully!""),MyClass.watchForSongChangesAndSend()},e.onerror=function(){alert(""Error loading script 'main.js'."")};var r=document.getElementsByTagName(""script"")[0];r.parentNode.insertBefore(e,r)}();} else {console.log('XXXXXX')}";
 
             Console.WriteLine($"Typing JS code: {jsCode}");
             simulator.TextEntry(jsCode);
