@@ -79,8 +79,8 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            align-items: flex-end;
-            text-align: right;
+            align-items: center; /* CHANGED from flex-end to center to center weather */
+            text-align: center;  /* Ensure inner text centers */
         }
 
         .time-display {
@@ -103,6 +103,7 @@
             /* Align icon and text */
             align-items: center;
             /* Vertically align icon and text */
+            justify-content: center; /* Ensure contents themselves are centered */
         }
 
         .weather-icon {
