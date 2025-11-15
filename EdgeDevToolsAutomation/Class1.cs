@@ -5,6 +5,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Net.Http;
+using System.IO;
+using TextCopy;
 
 namespace EdgeDevToolsAutomation
 {
@@ -23,6 +26,7 @@ namespace EdgeDevToolsAutomation
 
         private const int SW_RESTORE = 9; // Restores a minimized window
 
+        [STAThread]
         public static void Main(string[] args)
         {
             string windowTitlePart = "YouTube Music";
@@ -56,7 +60,7 @@ namespace EdgeDevToolsAutomation
             Console.WriteLine("Bringing window to foreground...");
             ShowWindow(edgeWindowHandle, SW_RESTORE); // Ensure it's not minimized
             SetForegroundWindow(edgeWindowHandle);
-            Thread.Sleep(30); // Give it a moment to activate
+            Thread.Sleep(300); // Give it a moment to activate
 
             var simulator = new InputSimulatorStandard.KeyboardSimulator();
 
@@ -67,7 +71,7 @@ namespace EdgeDevToolsAutomation
 
             // Use Ctrl+Shift+J to open the console, then Ctrl + ` to focus the text area
             Console.WriteLine("Opening Dev Console with Ctrl+Shift+J and focusing with Ctrl+`");
-            
+
             simulator.ModifiedKeyStroke(new[] { VirtualKeyCode.CONTROL, VirtualKeyCode.SHIFT }, // Modifier keys
                 VirtualKeyCode.VK_J);
 
@@ -75,29 +79,59 @@ namespace EdgeDevToolsAutomation
 
             // Simulate Ctrl + ` (backtick/backquote) to focus the console input area
             simulator.ModifiedKeyStroke(VirtualKeyCode.CONTROL, VirtualKeyCode.OEM_3);
-            Thread.Sleep(30); // Wait for focus to shift
+            Thread.Sleep(300); // Wait for focus to shift
 
-            // 3. Add and run some JS
-            string jsCode = @"if(typeof(MyClass)==='undefined'){!function(){var e=document.createElement(""script"");let t=window.trustedTypes.createPolicy(""myAppPolicy"",{createScriptURL:e=>e});e.src=t.createScriptURL(""http://localhost:8081/minimonitor/assets/main.js""),e.onload=async function(){console.log(""Script 'main.js' has loaded successfully!""),MyClass.watchForSongChangesAndSend()},e.onerror=function(){alert(""Error loading script 'main.js'."")};var r=document.getElementsByTagName(""script"")[0];r.parentNode.insertBefore(e,r)}();} else {console.log('XXXXXX')}";
+            // download this script so we can run it (http://localhost:8081/minimonitor/assets/main.js)
+            // use a basic web request to download the script and save it locally
+            string scriptUrl = "http://localhost:8081/minimonitor/assets/main.js";
+            string localFilePath = Path.Combine(Path.GetTempPath(), "minimonitor.main.js");
 
-            Console.WriteLine($"Typing JS code: {jsCode}");
-            simulator.TextEntry(jsCode);
-            Thread.Sleep(30); // Give it a moment to type
+            string jsCode = "";
+            using (var http = new HttpClient())
+            {
+                // Synchronously download content (simpler for this console app)
+                jsCode = http.GetStringAsync(scriptUrl).GetAwaiter().GetResult();
+            }
+
+            
+            // Use clipboard + paste instead of typing the whole JS
+            Console.WriteLine("Copying JS code to clipboard and pasting into DevTools console...");
+            try
+            {
+                ClipboardService.SetText(jsCode);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to set clipboard text: {ex.Message}");
+                return;
+            }
+
+            Thread.Sleep(100); // small delay to ensure clipboard is set
+            // Paste with Ctrl+V
+            simulator.ModifiedKeyStroke(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_V);
+            Thread.Sleep(150); // Give it a moment to paste
 
             Console.WriteLine("Hitting Enter to run JS...");
             simulator.KeyPress(VirtualKeyCode.RETURN);
-            Thread.Sleep(30); // Give JS time to execute
+            Thread.Sleep(300); // Give JS time to execute
+
+            // Now paste the watchForSongChangesAndSend call via clipboard as well
+            string watchCall = "MyClass.watchForSongChangesAndSend();";
+            Console.WriteLine($"Copying and pasting: {watchCall}");
+            simulator.TextEntry(watchCall);
+            
+            Thread.Sleep(100);
+            simulator.ModifiedKeyStroke(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_V);
+            Thread.Sleep(150);
+
+            Console.WriteLine("Hitting Enter to run JS...");
+            simulator.KeyPress(VirtualKeyCode.RETURN);
+            Thread.Sleep(300); // Give JS time to execute
 
             // 4. Close Dev Tools by hitting F12 again
             Console.WriteLine("Hitting F12 to close Dev Tools...");
             simulator.KeyPress(VirtualKeyCode.F12);
-            Thread.Sleep(30); // Give Dev Tools time to close
-
-
-            //while (true)
-            //{
-            //    Thread.Sleep(30); // Give Dev Tools time to close
-            //}
+            Thread.Sleep(300); // Give Dev Tools time to close
 
             Console.WriteLine("Automation complete.");
         }
