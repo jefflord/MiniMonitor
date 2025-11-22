@@ -154,70 +154,10 @@ class Util {
         return JSON.stringify(result);
     }
 }
-class AudioScheduler {
-    audioElement;
-    currentIntervalId = null; // To store the ID of the current interval
-    nextPlayTimeoutId = null; // To store the ID of the next play timeout
-    constructor(audioElement) {
-        this.audioElement = audioElement;
-    }
-    /**
-     * Schedules the audio to play repeatedly at a given interval.
-     * If called with a new interval, any previously scheduled interval is cleared.
-     * @param intervalMs The interval in milliseconds at which to play the sound.
-     */
-    playSound(intervalMs) {
-        // Clear any existing interval
-        this.cancelAllScheduledPlays();
-        if (intervalMs <= 0) {
-            console.warn("Interval must be a positive number. Sound will not play.");
-            return;
-        }
-        // Immediately play the sound for the first time
-        this.audioElement.play().catch(e => console.error("Error playing audio:", e));
-        // Schedule subsequent plays
-        this.currentIntervalId = window.setInterval(() => {
-            this.audioElement.play().catch(e => console.error("Error playing audio:", e));
-        }, intervalMs);
-    }
-    /**
-     * Plays the sound once after a specified delay.
-     * If called while a repeating interval is active, the interval is cleared,
-     * and only this single play event is scheduled.
-     * @param delayMs The delay in milliseconds before playing the sound.
-     */
-    playOnceAfterDelay(delayMs) {
-        this.cancelAllScheduledPlays();
-        if (delayMs < 0) {
-            console.warn("Delay must be a non-negative number. Sound will not play.");
-            return;
-        }
-        this.nextPlayTimeoutId = window.setTimeout(() => {
-            this.audioElement.play().catch(e => console.error("Error playing audio:", e));
-            this.nextPlayTimeoutId = null; // Clear the timeout ID after it executes
-        }, delayMs);
-    }
-    /**
-     * Cancels all currently scheduled playSound events, both repeating intervals and single future plays.
-     */
-    cancelAllScheduledPlays() {
-        if (this.currentIntervalId !== null) {
-            window.clearInterval(this.currentIntervalId);
-            this.currentIntervalId = null;
-            console.log("Cleared existing sound interval.");
-        }
-        if (this.nextPlayTimeoutId !== null) {
-            window.clearTimeout(this.nextPlayTimeoutId);
-            this.nextPlayTimeoutId = null;
-            console.log("Cleared existing future play timeout.");
-        }
-    }
-}
 class MyClass {
     static ytm = null;
     static external = window["external"];
     static lastSoundTime = new Date("2000/01/01");
-    static audioScheduler = new AudioScheduler(new Audio('assets/Alarm04.wav'));
     //
     static trySetInnerHTML(id, text) {
         if (text === null || text === undefined) {
@@ -331,7 +271,12 @@ class MyClass {
                 let timeMessage = "";
                 let minutesUntil = (new Date(dataObject.StartTimeUtc).getTime() - new Date().getTime()) / 1000.0 / 60.0;
                 let formattedRel = (luxon.DateTime.fromISO(dataObject.StartTimeUtc)).toRelative({ base: luxon.DateTime.now(), style: 'long' });
-                if (minutesUntil > 0) {
+                // Custom formatting for 1-2 hours range
+                if (minutesUntil >= 60 && minutesUntil < 120) {
+                    const extra = Math.floor(minutesUntil - 60);
+                    timeMessage = extra === 0 ? "in 1 hour" : `in 1 hour and ${extra} minute${extra === 1 ? '' : 's'}`;
+                }
+                else if (minutesUntil > 0) {
                     timeMessage = `${formattedRel}`;
                 }
                 else {
@@ -499,7 +444,6 @@ class MyClass {
                 const properties = Object.getOwnPropertyNames(obj).concat(Object.keys(obj)); // Get own and enumerable properties
                 for (const prop of properties) {
                     // Avoid common problematic properties to prevent errors or infinite loops
-                    // This list can be adjusted based on your needs.
                     if (prop === 'window' ||
                         prop === 'document' ||
                         prop === 'self' ||
@@ -515,8 +459,7 @@ class MyClass {
                         prop === 'localStorage' ||
                         prop === 'sessionStorage' ||
                         prop === 'globalThis' ||
-                        prop === '__proto__' // Avoid direct __proto__ access for robustness
-                    ) {
+                        prop === '__proto__') {
                         continue;
                     }
                     let value;
@@ -524,10 +467,8 @@ class MyClass {
                         value = obj[prop];
                     }
                     catch (e) {
-                        // Some properties might throw errors on access
                         continue;
                     }
-                    // Only traverse if it's an object and not null (and not a function itself)
                     if (value !== null && typeof value === 'object') {
                         const found = traverse(value);
                         if (found) {
@@ -537,7 +478,6 @@ class MyClass {
                 }
             }
             catch (e) {
-                // Catch potential errors during property access (e.g., security errors)
                 console.warn(`Error traversing object:`, obj, e);
             }
             return null; // Not found in this branch
@@ -545,48 +485,27 @@ class MyClass {
         return traverse(window); // Start the traversal from the window object
     }
     static clickButton(buttonElement) {
-        // --- Input Validation ---
         if (!buttonElement) {
-            console.error("Error: The 'buttonElement' provided is null or undefined. Cannot dispatch click event.");
-            // Return false or throw an error based on desired error handling
             throw new Error("Invalid input: buttonElement is null or undefined.");
         }
         if (!(buttonElement instanceof HTMLButtonElement)) {
-            console.error(`Error: Expected an HTMLButtonElement, but received a ${buttonElement.constructor.name}.`);
             throw new Error("Invalid input: The provided element is not an HTMLButtonElement.");
         }
         try {
-            // --- Create the MouseEvent ---
-            // A MouseEvent is used for clicks.
-            // 'bubbles: true' allows the event to propagate up the DOM tree,
-            // mimicking natural event behavior.
-            // 'cancelable: true' allows the event to be prevented (e.g., if a listener calls event.preventDefault()).
-            // 'view: window' links the event to the current window context.
             const clickEvent = new MouseEvent('click', {
                 bubbles: true,
                 cancelable: true,
                 view: window
             });
-            // --- Dispatch the Event ---
-            // dispatchEvent triggers the event on the specified element.
-            // It returns false if any event listener called event.preventDefault().
             const wasDispatchedSuccessfully = buttonElement.dispatchEvent(clickEvent);
-            if (wasDispatchedSuccessfully) {
-                console.log(`Successfully dispatched a synthetic click event to button with ID: ${buttonElement.id || 'N/A'}`);
-            }
-            else {
-                console.warn(`Synthetic click event on button with ID: ${buttonElement.id || 'N/A'} was canceled by a listener.`);
-            }
             return wasDispatchedSuccessfully;
         }
         catch (error) {
-            console.error(`An error occurred while attempting to click the button with ID: ${buttonElement.id || 'N/A'}.`, error);
             return false; // Indicate failure
         }
     }
     static handleMusicControlEvent(event) {
         let me = MyClass;
-        console.log('Message from server:', event.data);
         let eventData = JSON.parse(event.data);
         if (eventData.action === "pause") {
             me.findYouTubePlayerObject().pauseVideo();
@@ -802,20 +721,24 @@ class MyClass {
                 }
                 if (calendarData && calendarData.DataType === "CalendarData" && calendarData.HasEvents) {
                     me.trySetInnerText("meeting-title", calendarData.Summary);
-                    let relativeTimeFromNow = luxon.DateTime.fromISO(calendarData.StartTimeUtc).toRelative({ base: luxon.DateTime.now(), style: 'long' });
+                    let minutesUntil = (luxon.DateTime.fromISO(calendarData.StartTimeUtc).toMillis() - luxon.DateTime.now().toMillis()) / (1000 * 60);
+                    let relativeTimeFromNow;
+                    if (minutesUntil >= 60 && minutesUntil < 120) {
+                        const extra = Math.floor(minutesUntil - 60);
+                        relativeTimeFromNow = extra === 0 ? "in 1 hour" : `in 1 hour and ${extra} minute${extra === 1 ? '' : 's'}`;
+                    }
+                    else {
+                        relativeTimeFromNow = luxon.DateTime.fromISO(calendarData.StartTimeUtc).toRelative({ base: luxon.DateTime.now(), style: 'long' });
+                    }
                     me.trySetInnerText("meeting-time-relative", relativeTimeFromNow);
                     // Calculate minutes until meeting for flash logic
-                    let minutesUntil = (luxon.DateTime.fromISO(calendarData.StartTimeUtc).toMillis() - luxon.DateTime.now().toMillis()) / (1000 * 60);
+                    let minutesUntilFlash = minutesUntil;
                     let gridIitemHeaderLeft = document.querySelector(".grid-item.header-left");
-                    // Handle flashing for meeting-time-relative when less than 5 minutes
                     gridIitemHeaderLeft.style.backgroundColor = "";
-                    gridIitemHeaderLeft.style.border = "";
-                    if (minutesUntil <= 1 && minutesUntil > 0) {
-                        gridIitemHeaderLeft.style.backgroundColor = "#ff00004a";
-                        // Start flashing if not already flashing
+                    if (minutesUntilFlash <= 1 && minutesUntilFlash > 0) {
+                        gridIitemHeaderLeft.style.backgroundColor = "crimson";
                         if (!me.lastMeetingFlashState) {
                             me.lastMeetingFlashState = true;
-                            me.audioScheduler.playOnceAfterDelay(100);
                             if (me.meetingFlashIntervalRef) {
                                 clearInterval(me.meetingFlashIntervalRef);
                             }
@@ -825,61 +748,37 @@ class MyClass {
                             }, 1000);
                         }
                     }
-                    else if (minutesUntil <= 5 && minutesUntil > 0) {
-                        // Start flashing if not already flashing
-                        gridIitemHeaderLeft.style.border = "1px #ff5500 dashed";
+                    else if (minutesUntilFlash <= 5 && minutesUntilFlash > 0) {
                         if (!me.lastMeetingFlashState) {
                             me.lastMeetingFlashState = true;
-                            me.audioScheduler.playSound(1 * 60000);
                             if (me.meetingFlashIntervalRef) {
                                 clearInterval(me.meetingFlashIntervalRef);
                             }
                             me.meetingFlashIntervalRef = setInterval(async () => {
                                 const element = document.getElementById("meeting-time-relative");
                                 await MyClass.FlashElement(element, 500, 100);
-                            }, 5000);
+                            }, 2000);
                         }
                     }
-                    else if (minutesUntil <= 10 && minutesUntil > 0) {
-                        // Start flashing if not already flashing
-                        gridIitemHeaderLeft.style.border = "1px #ff55007d dashed";
+                    else if (minutesUntilFlash <= 10 && minutesUntilFlash > 0) {
                         if (!me.lastMeetingFlashState) {
                             me.lastMeetingFlashState = true;
-                            me.audioScheduler.playSound(3 * 60000);
                             if (me.meetingFlashIntervalRef) {
                                 clearInterval(me.meetingFlashIntervalRef);
                             }
                             me.meetingFlashIntervalRef = setInterval(async () => {
                                 const element = document.getElementById("meeting-time-relative");
                                 await MyClass.FlashElement(element, 1000, 100);
-                            }, 30000); // 
-                        }
-                    }
-                    else if (minutesUntil <= 30 && minutesUntil > 0) {
-                        // Start flashing if not already flashing
-                        gridIitemHeaderLeft.style.border = "1px #f9ff004d dashed";
-                        if (!me.lastMeetingFlashState) {
-                            me.lastMeetingFlashState = true;
-                            me.audioScheduler.playSound(10 * 60000);
-                            if (me.meetingFlashIntervalRef) {
-                                clearInterval(me.meetingFlashIntervalRef);
-                            }
-                            me.meetingFlashIntervalRef = setInterval(async () => {
-                                const element = document.getElementById("meeting-time-relative");
-                                await MyClass.FlashElement(element, 2000, 200);
-                            }, 60000); // 
+                            }, 10000);
                         }
                     }
                     else {
-                        // Stop flashing if meeting is more than X minutes away or has started
                         if (me.lastMeetingFlashState) {
-                            me.audioScheduler.cancelAllScheduledPlays();
                             me.lastMeetingFlashState = false;
                             if (me.meetingFlashIntervalRef) {
                                 clearInterval(me.meetingFlashIntervalRef);
                                 me.meetingFlashIntervalRef = 0;
                             }
-                            // Ensure element is visible when stopping flash
                             const element = document.getElementById("meeting-time-relative");
                             if (element) {
                                 element.style.opacity = "1";
@@ -892,15 +791,8 @@ class MyClass {
                     else {
                         me.trySetInnerText("meeting-details", "TBD");
                     }
-                    //
-                    // 
-                    // meeting-title
-                    // 
-                    // Summary
-                    //HasEvents
                 }
                 else {
-                    // No meeting data - stop any flashing
                     if (me.lastMeetingFlashState) {
                         me.lastMeetingFlashState = false;
                         if (me.meetingFlashIntervalRef) {
@@ -911,7 +803,6 @@ class MyClass {
                     me.trySetInnerText("meeting-title", "Nothing soon!");
                     me.trySetInnerHTML("meeting-time-relative", "&nbsp;");
                     me.trySetInnerHTML("meeting-details", "&nbsp;");
-                    // Ensure meeting-time-relative is visible when no meeting
                     const element = document.getElementById("meeting-time-relative");
                     if (element) {
                         element.style.opacity = "1";
@@ -926,7 +817,6 @@ class MyClass {
             setTimeout(async function () { await MyClass.UpdateSensorDataForB(); }, 1000);
         }
         catch (ex) {
-            console.error(ex);
             setTimeout(async function () { await MyClass.UpdateSensorDataForB(); }, 5000);
         }
     }
@@ -981,15 +871,7 @@ class MyClass {
     }
     static ToggleYTM() {
         let me = this;
-        //if (me.ytm == null) {
-        //    //me.ytm = window.open("https://music.youtube.com/");
-        //    me.external.sendMessage('FindYTM');
-        //} else {
-        //    me.external.sendMessage('ToggleYTM');
-        //}
         me.external.sendMessage('ToggleYTM');
-        //me.external.sendMessage('TestWebDriver');
-        //me.external.sendMessage('SendTest');
     }
     static SendMessage(message) {
         let me = this;
@@ -1016,28 +898,10 @@ class MyClass {
     }
 }
 window["Util"] = Util;
-//var myYTMHelper = new YTMHelper();
-//function onYouTubeIframeAPIReady() {
-//    myYTMHelper.onYouTubeIframeAPIReady();
-//}
 if (MyClass.isPageB()) {
     MyClass.UpdateSensorDataForB();
 }
 var _YTMusicSite = null;
 function openYTMusicSite(btn) {
     MyClass.sendServerMessage("wireUpYT", { "action": "na" });
-    //// Store the current innerText in dataset
-    //btn.dataset.prevInnerText = btn.innerText;
-    //btn.innerText = "Clicked";
-    //btn.disabled = true;
-    //setTimeout(() => {
-    //    btn.innerText = btn.dataset.prevInnerText as string;
-    //    btn.disabled = false;
-    //}, 1000);
-    //if (_YTMusicSite && !_YTMusicSite.closed) {
-    //    _YTMusicSite.close();
-    //} else {
-    //    _YTMusicSite = window.open('https://music.youtube.com/', 'myytmusic', 'width=1200,height=800');
-    //}
 }
-//alert(MyClass.isPageB());
