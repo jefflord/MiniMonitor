@@ -541,6 +541,7 @@ class MyClass {
             { "code": 801, "short_name": "Clouds", "description": "few clouds: 11-25%", "icon": "02d" },
             { "code": 802, "short_name": "Clouds", "description": "scattered clouds: 25-50%", "icon": "03d" },
             { "code": 803, "short_name": "Clouds", "description": "broken clouds: 51-84%", "icon": "04d" },
+            { "code": 803, "short_name": "Clouds", "description": "broken clouds", "icon": "04d" },
             { "code": 804, "short_name": "Clouds", "description": "overcast clouds: 85-100%", "icon": "04d" },
             { "code": 805, "short_name": "Clouds", "description": "overcast clouds", "icon": "04d" },
             { "code": 806, "short_name": "Clear Sky", "description": "clear sky", "icon": "01d" },
