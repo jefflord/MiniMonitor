@@ -732,6 +732,34 @@ class MyClass {
                         relativeTimeFromNow = luxon.DateTime.fromISO(calendarData.StartTimeUtc).toRelative({ base: luxon.DateTime.now(), style: 'long' });
                     }
                     me.trySetInnerText("meeting-time-relative", relativeTimeFromNow);
+                    console.log(`[Calendar] Meeting: "${calendarData.Summary}", minutesUntil=${minutesUntil.toFixed(2)}, lastSoundTime=${me.lastSoundTime}`);
+                    // Sound alert logic (mirrors legacy HandleMessage path)
+                    let soundIntervalSeconds = 0;
+                    if (minutesUntil < 1) {
+                        soundIntervalSeconds = 60;
+                    }
+                    else if (minutesUntil < 2) {
+                        soundIntervalSeconds = 60;
+                    }
+                    else if (minutesUntil < 5) {
+                        soundIntervalSeconds = 120;
+                    }
+                    else if (minutesUntil < 15) {
+                        soundIntervalSeconds = 120;
+                    }
+                    else if (minutesUntil < 30) {
+                        soundIntervalSeconds = 300;
+                    }
+                    if (soundIntervalSeconds > 0 && minutesUntil > 0) {
+                        let timeDiffSeconds = (new Date().getTime() - me.lastSoundTime.getTime()) / 1000;
+                        console.log(`[Calendar] Sound check: soundIntervalSeconds=${soundIntervalSeconds}, timeDiffSeconds=${timeDiffSeconds.toFixed(1)}`);
+                        if (timeDiffSeconds > soundIntervalSeconds) {
+                            me.lastSoundTime = new Date();
+                            console.log(`[Calendar] Playing sound! minutesUntil=${minutesUntil.toFixed(2)}`);
+                            const audioElement = new Audio('assets/Alarm04.wav');
+                            audioElement.play().catch(e => console.error('[Calendar] Audio play failed:', e));
+                        }
+                    }
                     // Calculate minutes until meeting for flash logic
                     let minutesUntilFlash = minutesUntil;
                     let gridIitemHeaderLeft = document.querySelector(".grid-item.header-left");
