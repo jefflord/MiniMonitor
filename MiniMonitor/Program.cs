@@ -227,7 +227,7 @@ namespace HelloPhotinoApp
 
                             var x = calendar.GetOccurrences(DateTime.UtcNow.AddHours(-24), DateTime.UtcNow.AddDays(3)).ToList();
                             var y = x.Where(o => o.Period.StartTime.Date >= DateTime.Today && o.Period.StartTime.HasTime).ToList();
-                            var z = y.OrderBy(o => o.Period.StartTime).Take(6).ToList();
+                            var z = y.OrderBy(o => o.Period.StartTime.AsDateTimeOffset).Take(6).ToList();
 
                             occurrencesForToday.AddRange(z);
                         }
