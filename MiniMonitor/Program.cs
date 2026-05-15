@@ -246,11 +246,22 @@ namespace HelloPhotinoApp
                                     continue;
                                 }
                                 hadEvent = true;
+
+
+                                // get the first
+                                var first = ev.Period.StartTime.AsUtc;
+
+                                // see if there are others at the exact same time, if so we can combine them into one message
+                                var allAtSameTime = occurrencesForToday.Where(o => o.Period.StartTime.AsUtc == first).ToList();
+
+                                var combinedSummary = string.Join(", ", allAtSameTime.Select(o => ((CalendarEvent)o.Source).Summary));
+
+
                                 calendarData = new
                                 {
                                     DataType = "CalendarData",
                                     HasEvents = true,
-                                    Summary = originalEvent.Summary,
+                                    Summary = combinedSummary,
                                     StartTimeUtc = ev.Period.StartTime.AsUtc.ToString("O"),
                                     WaitOneGotSignal = waitOneGotSignal
                                 };
