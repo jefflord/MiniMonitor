@@ -24,14 +24,14 @@
 	<ItemGroup>
 		<PackageReference Include="Ical.Net" Version="4.3.1" />
 		<PackageReference Include="InputSimulator" Version="1.0.4" />
-		<PackageReference Include="LibreHardwareMonitorLib" Version="0.9.3" />
+		<PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
 		<PackageReference Include="Microsoft.AspNetCore.App" Version="2.2.8" />
 		<PackageReference Include="Photino.NET" Version="4.0.16" />
 		<PackageReference Include="Selenium.WebDriver" Version="4.32.0" />
 		<PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="136.0.7103.4900" />
 		<PackageReference Include="Selenium.WebDriver.GeckoDriver" Version="0.36.0" />
 		<PackageReference Include="Selenium.WebDriver.MSEdgeDriver" Version="136.0.3240.50" />
-		<PackageReference Include="System.Management" Version="8.0.0" />
+		<PackageReference Include="System.Management" Version="10.0.9" />
 	</ItemGroup>
 
 	<ItemGroup>
