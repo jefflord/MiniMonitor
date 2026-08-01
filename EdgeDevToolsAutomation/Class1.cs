@@ -83,17 +83,20 @@ namespace EdgeDevToolsAutomation
 
             // download this script so we can run it (http://localhost:8081/minimonitor/assets/main.js)
             // use a basic web request to download the script and save it locally
-            string scriptUrl = "http://localhost:8081/minimonitor/assets/main.js";
-            string localFilePath = Path.Combine(Path.GetTempPath(), "minimonitor.main.js");
+            //string scriptUrl = "http://localhost:8081/minimonitor/assets/main.js";
+            //string localFilePath = Path.Combine(Path.GetTempPath(), "minimonitor.main.js");
 
-            string jsCode = "";
-            using (var http = new HttpClient())
-            {
-                // Synchronously download content (simpler for this console app)
-                jsCode = http.GetStringAsync(scriptUrl).GetAwaiter().GetResult();
-            }
 
-            
+            //string jsCode = "";
+            //using (var http = new HttpClient())
+            //{
+            //    // Synchronously download content (simpler for this console app)
+            //    jsCode = http.GetStringAsync(scriptUrl).GetAwaiter().GetResult();
+            //}
+            Debugger.Launch();
+            string jsCode = File.ReadAllText("wwwroot\\assets\\main.js");
+
+
             // Use clipboard + paste instead of typing the whole JS
             Console.WriteLine("Copying JS code to clipboard and pasting into DevTools console...");
             try
