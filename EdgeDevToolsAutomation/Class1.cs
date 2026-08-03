@@ -93,7 +93,7 @@ namespace EdgeDevToolsAutomation
             //    // Synchronously download content (simpler for this console app)
             //    jsCode = http.GetStringAsync(scriptUrl).GetAwaiter().GetResult();
             //}
-            Debugger.Launch();
+            //Debugger.Launch();
             string jsCode = File.ReadAllText("wwwroot\\assets\\main.js");
 
 
